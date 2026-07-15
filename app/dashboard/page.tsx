@@ -14,9 +14,16 @@ export default async function DashboardIndexPage() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("role")
+    .select("role, onboarded")
     .eq("id", user.id)
     .single();
+
+  // OAuth sign-ins (e.g. Google) skip the role-selection step that the
+  // email/password registration form normally handles, so send them to a
+  // one-time "choose your role" screen first.
+  if (profile && !profile.onboarded) {
+    redirect("/auth/complete-profile");
+  }
 
   if (profile?.role === "organizer") {
     redirect("/dashboard/organizer");

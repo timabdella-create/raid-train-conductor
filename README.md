@@ -205,7 +205,7 @@ npm install
 2. Note the **Project URL** and **anon public key** from Project Settings → API. You'll also want the **service role key** (same page) — keep this one secret, server-only.
 
 ### Step 3 — Run the migrations
-Easiest path (no CLI needed): open the Supabase Dashboard → **SQL Editor**, and run each file in `supabase/migrations/` **in order** (`0001` through `0006`), pasting the full contents of one file, running it, then moving to the next. Order matters — later migrations alter tables and functions the earlier ones create.
+Easiest path (no CLI needed): open the Supabase Dashboard → **SQL Editor**, and run each file in `supabase/migrations/` **in order** (`0001` through `0008`), pasting the full contents of one file, running it, then moving to the next. Order matters — later migrations alter tables and functions the earlier ones create.
 
 CLI path, if you prefer version-controlled migrations:
 ```bash
@@ -236,13 +236,21 @@ To get the original 15-minute precision back without upgrading to Vercel Pro, dr
 ### Step 7 — Point Supabase Auth redirects at your app
 In Supabase Dashboard → Authentication → URL Configuration, add `http://localhost:3000/auth/callback` to the Redirect URLs list (and your production URL later).
 
-### Step 8 — Run it
+### Step 8 — Enable "Continue with Google" (optional)
+The app already has a Google sign-in button wired up; enabling it takes two steps outside the codebase:
+
+1. **Google Cloud Console**: at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials), create an OAuth 2.0 Client ID (Application type: **Web application**). Add `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback` as an Authorized redirect URI. Copy the generated **Client ID** and **Client Secret**.
+2. **Supabase Dashboard** → Authentication → Sign In / Providers → **Google**: toggle it on, paste the Client ID and Client Secret from step 1, and save.
+
+First-time Google sign-ins default to the `seller` role and land on a one-time "choose your role" screen (`/auth/complete-profile`) before reaching the dashboard, since Google doesn't have a way to ask that question during its own consent screen. Skip this step entirely if you only need email/password auth — nothing else in the app depends on it.
+
+### Step 9 — Run it
 ```bash
 npm run dev
 ```
 Visit `http://localhost:3000`. Register an account, choose **Organizer** or **Seller**, confirm your email if required, log in, and you'll land on a dashboard that prompts you to complete your role-specific profile (organizer name/contact, or Whatnot username/profile URL).
 
-### Step 8 — Typecheck
+### Step 10 — Typecheck
 ```bash
 npm run typecheck
 ```
@@ -335,3 +343,10 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **Public train page**: full-bleed hero banner (train image or gradient mesh fallback) with a pulsing "Live now" indicator, an upgraded stats card, live/next-slot highlight cards, and a restyled schedule table.
 - **Auth pages**: now share a common `components/auth/auth-shell.tsx` wrapper with the same gradient-mesh background and a glowing card, instead of a plain centered card.
 - **Note on the local build sandbox**: this project's build/verification sandbox blocks outbound requests to `fonts.googleapis.com`, so a local `next build` here fails at the font-fetch step. This is a sandbox network restriction, not a code issue — confirmed by temporarily stubbing out the font import and getting a fully clean build (all 17 routes) with no other errors. Vercel's build servers have normal internet access and fetch/self-host Google Fonts as part of every `next build`, so production deploys are unaffected.
+
+## 14. Google Sign-In (OAuth)
+
+- **Migration `0008_oauth_onboarding.sql`**: adds `onboarded` to `public.users` (true for email/password sign-ups, since they explicitly pick a role at registration; false for OAuth sign-ups, since Google has no equivalent step). Updates `handle_new_user()` to set it accordingly and to fall back through Google's `full_name`/`name` metadata for the display name. Adds `complete_oauth_onboarding(p_role)`, a `security definer` RPC guarded by `where onboarded = false` — it can only ever run once per user, so it can't be reused as a way to change roles later (the existing `users` RLS update policy already blocks that on ordinary updates).
+- **`components/auth/google-button.tsx`**: a "Continue with Google" button on both the login and register pages, calling `supabase.auth.signInWithOAuth({ provider: "google" })`.
+- **`app/auth/complete-profile`**: a one-time "choose your role" screen shown after a user's first Google sign-in (`app/dashboard/page.tsx` redirects here whenever `onboarded` is false). Picking Seller or Organizer calls the RPC above and lands the user on the matching dashboard from then on.
+- **Setup required outside the codebase** (see README §6, Step 8): a Google Cloud OAuth Client ID/Secret, entered into Supabase Dashboard → Authentication → Providers → Google. Nothing in the app itself needs an env var for this — Supabase holds the OAuth client secret, not this codebase.

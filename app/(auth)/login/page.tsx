@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
+import { GoogleButton } from "@/components/auth/google-button";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -11,6 +12,15 @@ export default function LoginPage() {
         <CardTitle className="font-display">Log in</CardTitle>
         <CardDescription>Welcome back to Raid Train Conductor.</CardDescription>
       </CardHeader>
+
+      <GoogleButton />
+
+      <div className="my-4 flex items-center gap-3 text-xs uppercase text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        or continue with email
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
       <Suspense>
         <LoginForm />
       </Suspense>

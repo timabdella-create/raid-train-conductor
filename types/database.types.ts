@@ -40,8 +40,11 @@ export interface Database {
   public: {
     Tables: {
       users: Table<
-        { id: string; email: string; role: UserRole; created_at: string; updated_at: string },
-        { id: string; email: string; role?: UserRole },
+        {
+          id: string; email: string; role: UserRole; onboarded: boolean;
+          created_at: string; updated_at: string;
+        },
+        { id: string; email: string; role?: UserRole; onboarded?: boolean },
         { role?: UserRole }
       >;
       profiles: Table<
@@ -281,6 +284,7 @@ export interface Database {
       decline_waitlist_offer: Fn<{ p_waitlist_entry_id: string }, undefined>;
       release_expired_waitlist_offers_for_train: Fn<{ p_train_id: string }, undefined>;
       swap_train_slot_sellers: Fn<{ p_slot_a_id: string; p_slot_b_id: string }, undefined>;
+      complete_oauth_onboarding: Fn<{ p_role: UserRole }, undefined>;
     };
   };
 }

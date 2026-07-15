@@ -1,6 +1,5 @@
 # Raid Train Conductor
 
-
 A complete raid-train management platform for Whatnot organizers, sellers, and shoppers — not just a signup calendar. This is Stage 1 (Phase 1: Foundation) of the build: project setup, database schema, security rules, authentication, and dashboard shells for organizers and sellers.
 
 ---
@@ -230,12 +229,14 @@ Fill in:
 - `CRON_SECRET` — any random string; must match whatever your scheduler sends as `Authorization: Bearer <value>` when it calls `/api/cron/send-reminders`. Leave unset for local testing (the check is skipped) — just don't leave it unset in production, since the route would then be callable by anyone who finds the URL.
 
 ### Step 6 — Wire up the reminders cron (Phase 5, production only)
-`vercel.json` already schedules `GET /api/cron/send-reminders` every 15 minutes when deployed to Vercel — set `CRON_SECRET` in your Vercel project's environment variables and Vercel adds the matching header automatically. Deploying elsewhere? Point any scheduler (a hosting provider's cron, GitHub Actions on a schedule, an external uptime-style pinger) at the same route with `Authorization: Bearer <CRON_SECRET>`. Locally, just hit `curl http://localhost:3000/api/cron/send-reminders` whenever you want to test it manually — the `_sent_at` columns keep repeated calls safe.
+`vercel.json` schedules `GET /api/cron/send-reminders` once a day (`0 13 * * *`, i.e. 1pm UTC) — set `CRON_SECRET` in your Vercel project's environment variables and Vercel adds the matching header automatically. This once-daily cadence is a **Vercel Hobby plan limit**, not a design choice: Hobby accounts reject any `vercel.json` cron schedule more frequent than once per day, and deploying with a tighter schedule (the original `*/15 * * * *` this route was designed around) fails outright with "Hobby accounts are limited to daily cron jobs." At once a day, the 24-hour reminder still works reliably, but the 2-hour and check-in reminders become unreliable — a single daily run can easily miss a slot's 2-hour window entirely.
 
-### Step 6 — Point Supabase Auth redirects at your app
+To get the original 15-minute precision back without upgrading to Vercel Pro, drop the `crons` block from `vercel.json` entirely and instead call the route from a free external scheduler — a GitHub Actions workflow on a `schedule:` trigger (since the code already lives in a GitHub repo) or a free tier at a service like cron-job.org both work, hitting `https://your-app.vercel.app/api/cron/send-reminders` with an `Authorization: Bearer <CRON_SECRET>` header every 15 minutes. The route itself doesn't care who calls it or how often — only Vercel's own built-in cron feature is Hobby-restricted. Deploying elsewhere entirely (not Vercel)? Same idea: point any scheduler at the route with that header. Locally, just hit `curl http://localhost:3000/api/cron/send-reminders` whenever you want to test it manually — the `_sent_at` columns keep repeated calls safe regardless of how often it's called.
+
+### Step 7 — Point Supabase Auth redirects at your app
 In Supabase Dashboard → Authentication → URL Configuration, add `http://localhost:3000/auth/callback` to the Redirect URLs list (and your production URL later).
 
-### Step 7 — Run it
+### Step 8 — Run it
 ```bash
 npm run dev
 ```
@@ -324,9 +325,4 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **Seller check-in** (`/dashboard/seller/upcoming`): each upcoming slot shows whether check-in is open yet (`now >= slot start − train.check_in_minutes_before`), a checked-in / not-yet-open / check-in-now badge, and a working "Check in" button (`checkInToTrain` action) once the window opens.
 - **Organizer manual check-in** (`.../schedule`): the schedule manager now shows each seller's check-in status and gives the organizer a manual Check-in / Undo-check-in button for the door-staff case — a seller shows up but never got the email, or checked in and then had a connection drop.
 - **Scheduled reminders** (`app/api/cron/send-reminders/route.ts`): scans confirmed `train_participants` for slots starting in the next two days, and for each one sends whichever of the 24-hour reminder, 2-hour reminder, or check-in-opened reminder is now due — gated by the three `_sent_at` columns so nothing repeats. Protected by a `CRON_SECRET` bearer-token check (skipped only if the env var is unset, for local testing); `vercel.json` schedules it to run every 15 minutes. Any other host can point its own scheduler at the same route with the same header.
-- **Organizer messaging** (`/dashboard/organizer/trains/[trainId]/messaging`): email every confirmed seller at once with a custom subject/message, email one seller by name, and one-click "quick sends" per seller for a reminder, a check-in notice, or a you're-up-next alert — all going through the same `sendNotification`/template pipeline as the automated emails, so a manually sent reminder looks identical to a cron-triggered one.
-- **What's intentionally still a placeholder**: emails render as plain HTML with no visual branding beyond a text header — a themed template pass is a nice-to-have, not blocking. There's no in-app notification center yet (only email), and no SMS/push/Discord delivery even though the `delivery_method` column already supports them — Resend-only was the Phase 5 scope. The "you're next" notification has a template and a manual quick-send button, but nothing yet fires it automatically when a slot goes live — that's the live control room's job in Phase 6, since it needs the same "what's currently live" state the control room is being built around.
-
-
-
-
+- **Organizer messaging** (`/das

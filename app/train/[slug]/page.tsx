@@ -40,30 +40,47 @@ export default async function PublicTrainPage({
 
   return (
     <main className="min-h-screen bg-background pb-16">
-      {train.image_url && (
-        <div className="relative h-48 w-full overflow-hidden sm:h-64">
-          <Image src={train.image_url} alt={train.name} fill className="object-cover" priority />
-        </div>
-      )}
+      <div className="relative h-56 w-full overflow-hidden sm:h-72">
+        {train.image_url ? (
+          <>
+            <Image src={train.image_url} alt={train.name} fill className="object-cover" priority />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-hero-mesh" />
+        )}
 
-      <div className="mx-auto max-w-3xl px-4">
-        <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{train.name}</h1>
+        {live && (
+          <div className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur">
+            <span className="h-2 w-2 animate-pulse-glow rounded-full bg-destructive" />
+            Live now
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 px-4 pb-4 sm:px-6">
+          <div className="mx-auto max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-4xl">
+                {train.name}
+              </h1>
               {gatedByCode && <Badge tone="warning">Private</Badge>}
             </div>
-            <p className="text-muted-foreground">
+            <p className="mt-1 text-sm text-white/70 sm:text-base">
               {train.category}
               {train.theme && ` • ${train.theme}`}
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-3xl px-4">
+        <div className="mt-4 flex justify-end">
           <ShareButtons url={publicUrl} title={train.name} />
         </div>
 
-        {train.description && <p className="mt-4">{train.description}</p>}
+        {train.description && <p className="mt-2">{train.description}</p>}
 
-        <dl className="mt-6 grid grid-cols-2 gap-4 rounded-md border border-border p-4 text-sm sm:grid-cols-4">
+        <dl className="mt-6 grid grid-cols-2 gap-4 rounded-lg border border-border bg-card p-4 text-sm shadow-sm sm:grid-cols-4">
           <div>
             <dt className="text-muted-foreground">Date</dt>
             <dd className="font-medium">{train.event_date}</dd>
@@ -80,22 +97,25 @@ export default async function PublicTrainPage({
           </div>
           <div>
             <dt className="text-muted-foreground">Open slots</dt>
-            <dd className="font-medium">{openCount}</dd>
+            <dd className="font-display font-semibold text-accent">{openCount}</dd>
           </div>
         </dl>
 
         {(live || next) && (
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {live && (
-              <div className="rounded-md border-2 border-destructive/40 bg-destructive/5 p-4">
-                <Badge tone="danger">Live now</Badge>
+              <div className="rounded-lg border-2 border-destructive/40 bg-destructive/5 p-4">
+                <Badge tone="danger">
+                  <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse-glow rounded-full bg-current" />
+                  Live now
+                </Badge>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Slot {live.position + 1} • ends {formatSlotTime(live.end_datetime, train.timezone)}
                 </p>
               </div>
             )}
             {next && (
-              <div className="rounded-md border border-border p-4">
+              <div className="rounded-lg border border-border bg-card p-4">
                 <Badge tone="info">Up next</Badge>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Slot {next.position + 1} • {formatSlotTime(next.start_datetime, train.timezone)}
@@ -109,7 +129,7 @@ export default async function PublicTrainPage({
         )}
 
         <div className="mt-8 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Schedule</h2>
+          <h2 className="font-display text-xl font-semibold">Schedule</h2>
           {train.signup_mode === "invite_only" ? (
             <Badge tone="neutral">Invite only</Badge>
           ) : train.signup_mode === "waitlist_only" || openCount === 0 ? (
@@ -118,12 +138,14 @@ export default async function PublicTrainPage({
             </Link>
           ) : (
             <Link href={`/train/${train.slug}/apply${gatedByCode ? `?code=${searchParams.code}` : ""}`}>
-              <Button>Apply for a slot</Button>
+              <Button className="glow-accent bg-accent text-accent-foreground hover:opacity-90">
+                Apply for a slot
+              </Button>
             </Link>
           )}
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-md border border-border">
+        <div className="mt-3 overflow-hidden rounded-lg border border-border shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="bg-muted">
               <tr>
@@ -134,7 +156,12 @@ export default async function PublicTrainPage({
             </thead>
             <tbody>
               {slots.map((slot) => (
-                <tr key={slot.id} className="border-t border-border">
+                <tr
+                  key={slot.id}
+                  className={`border-t border-border transition-colors hover:bg-muted/50 ${
+                    slot.status === "live" ? "bg-destructive/5" : ""
+                  }`}
+                >
                   <td className="px-4 py-2 text-muted-foreground">{slot.position + 1}</td>
                   <td className="px-4 py-2">
                     {formatSlotTime(slot.start_datetime, train.timezone)} –{" "}
@@ -153,13 +180,13 @@ export default async function PublicTrainPage({
           <div className="mt-8 space-y-4">
             {train.rules && (
               <div>
-                <h3 className="font-semibold">Train rules</h3>
+                <h3 className="font-display font-semibold">Train rules</h3>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">{train.rules}</p>
               </div>
             )}
             {train.cancellation_policy && (
               <div>
-                <h3 className="font-semibold">Cancellation policy</h3>
+                <h3 className="font-display font-semibold">Cancellation policy</h3>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                   {train.cancellation_policy}
                 </p>

@@ -1,5 +1,6 @@
 # Raid Train Conductor
 
+
 A complete raid-train management platform for Whatnot organizers, sellers, and shoppers — not just a signup calendar. This is Stage 1 (Phase 1: Foundation) of the build: project setup, database schema, security rules, authentication, and dashboard shells for organizers and sellers.
 
 ---

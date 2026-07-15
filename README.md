@@ -327,3 +327,4 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **What's intentionally still a placeholder**: emails render as plain HTML with no visual branding beyond a text header — a themed template pass is a nice-to-have, not blocking. There's no in-app notification center yet (only email), and no SMS/push/Discord delivery even though the `delivery_method` column already supports them — Resend-only was the Phase 5 scope. The "you're next" notification has a template and a manual quick-send button, but nothing yet fires it automatically when a slot goes live — that's the live control room's job in Phase 6, since it needs the same "what's currently live" state the control room is being built around.
 
 
+

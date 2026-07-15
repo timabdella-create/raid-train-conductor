@@ -1,0 +1,328 @@
+# Raid Train Conductor
+
+A complete raid-train management platform for Whatnot organizers, sellers, and shoppers — not just a signup calendar. This is Stage 1 (Phase 1: Foundation) of the build: project setup, database schema, security rules, authentication, and dashboard shells for organizers and sellers.
+
+---
+
+## 1. Recommended Technology Stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Frontend framework | Next.js 14 (App Router) + React 18 + TypeScript | Server Components cut client JS for data-heavy dashboards; Server Actions give secure server-side mutations without hand-rolling API routes for every form; file-based routing maps cleanly onto the page list in the spec (public pages, seller pages, organizer pages, admin pages). |
+| Styling | Tailwind CSS + a small hand-rolled component set (`components/ui`) | Fast to build mobile-first, large-tap-target UI. A shadcn/ui-style approach (own the component code, not a black-box library) keeps things simple to extend for train cards, status badges, and the live control room later. |
+| Backend | Supabase (PostgreSQL + Auth + Storage + Realtime) | One provider covers auth, a real relational database (needed for slot-uniqueness constraints, waitlist ordering, and audit logs), row-level security for the organizer/seller/public permission model, file storage for profile photos and train images, and Realtime for the live control room in Phase 6 — without standing up a separate backend service. |
+| Email | Resend (placeholder in `.env.example`, wired up in Phase 5) | Simple transactional email API, good deliverability, generous free tier. Not required to run Phase 1. |
+| Hosting | Vercel (app) + Supabase (data/auth/storage) | Native Next.js support, preview deployments per branch, zero server management. |
+
+### Why this instead of alternatives
+- **Supabase vs. a custom Node/Express + Postgres backend:** the spec's security requirements (RLS, "sellers can't see private organizer notes," "no duplicate slot claims") map directly onto Postgres row-level security and constraints. Hand-rolling this in an ORM would duplicate logic Supabase gives for free at the database layer, which is also the safest place to enforce it.
+- **Server Actions vs. a separate REST/GraphQL API:** the app has one frontend and no need for a public API in the MVP. Server Actions keep validation, mutation, and revalidation co-located and typed end-to-end.
+- **Hand-rolled `components/ui` vs. installing shadcn/ui's CLI:** functionally equivalent (same styling conventions, same accessibility patterns), but avoids a codegen step that isn't available in this build environment. Swapping to the shadcn CLI later is a drop-in change.
+
+---
+
+## 2. Full MVP Feature List
+
+Grouped by build phase (see §7, Roadmap, for the plan). Phase 1 is what ships in this stage.
+
+**Phase 1 — Foundation (this stage)**
+1. Project scaffold (Next.js, TypeScript, Tailwind)
+2. Database schema for all core tables
+3. Row-level security for every table
+4. Registration, login, password reset, email confirmation
+5. User roles (organizer / seller / admin)
+6. Organizer profile creation
+7. Seller profile creation
+8. Protected dashboard shell with role-based routing
+9. Mobile-responsive layout and navigation
+
+**Phase 2 — Train Creation**
+10. Raid-train creation wizard (6 steps, per spec)
+11. Automatic time-slot generation
+12. Draft / publish workflow
+13. Public train page (`/train/[slug]`)
+14. Visibility modes: public, unlisted, private (with invite code)
+15. Clone a previous train
+
+**Phase 3 — Seller Signup**
+16. Seller application form
+17. Open signup (first-claim), approval-required, invite-only, waitlist-only modes
+18. Temporary slot holds to prevent double-claims
+19. Waitlist join/offer flow (manual offers in MVP)
+20. Seller confirmation
+
+**Phase 4 — Organizer Management**
+21. Organizer dashboard (overview, schedule, applications, waitlist, missing info)
+22. Drag-and-drop schedule reordering
+23. Cancellation + replacement tools
+24. Missing-information tracking
+25. Schedule export
+
+**Phase 5 — Reminders and Check-in**
+26. Transactional email reminders (signup confirmation, approval/rejection, 24h/2h reminders, check-in, "you're next," cancellation, replacement offer)
+27. Configurable check-in windows
+28. Seller self check-in + organizer manual check-in
+
+**Phase 6 — Live Control Room**
+29. Live seller / next seller panel with countdown
+30. Mark live / completed / skipped / late / no-show
+31. Extend or end a slot early
+32. Train activity log
+
+**Phase 7 — Testing & Launch**
+33. Mobile, permissions, duplicate-slot, email, and time-zone test passes
+34. Basic analytics
+35. Production deployment
+
+Deliberately excluded from all MVP phases (per spec): native mobile apps, public reliability scores, DMs/group chat, payment processing, automatic Whatnot verification, live viewer-count integration, AI-generated graphics, complex subscription billing.
+
+---
+
+## 3. Folder Structure
+
+```
+raid-train-conductor/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   └── reset-password/page.tsx
+│   ├── auth/
+│   │   └── callback/route.ts        # exchanges Supabase email-link codes for a session
+│   ├── dashboard/
+│   │   ├── layout.tsx               # shared shell (header + nav), auth-gated by middleware
+│   │   ├── page.tsx                 # redirects to /dashboard/organizer or /dashboard/seller
+│   │   ├── organizer/
+│   │   │   ├── page.tsx
+│   │   │   └── actions.ts           # Server Actions (create organizer profile)
+│   │   └── seller/
+│   │       ├── page.tsx
+│   │       └── actions.ts           # Server Actions (create seller profile)
+│   ├── layout.tsx                   # root HTML shell
+│   ├── page.tsx                     # marketing/home page
+│   └── globals.css
+├── components/
+│   ├── ui/                          # button, input, label, card, badge
+│   ├── auth/                        # login-form, register-form, reset-password-form, sign-out-button
+│   ├── nav/                         # site-header
+│   ├── organizer/                   # organizer-profile-form
+│   └── seller/                      # seller-profile-form
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts                # browser client
+│   │   ├── server.ts                # server client + admin client
+│   │   └── middleware.ts            # session refresh + route protection
+│   ├── validations/
+│   │   └── auth.ts                  # zod schemas
+│   └── utils.ts
+├── types/
+│   └── database.types.ts            # hand-written now; regenerate via Supabase CLI once linked
+├── supabase/
+│   └── migrations/
+│       ├── 0001_initial_schema.sql
+│       └── 0002_row_level_security.sql
+├── middleware.ts                    # root middleware, delegates to lib/supabase/middleware.ts
+├── .env.example
+├── package.json
+├── tsconfig.json
+├── tailwind.config.ts
+└── next.config.mjs
+```
+
+Future phases add `app/train/[slug]/` (public train page), `app/dashboard/organizer/[trainId]/...` (schedule manager, applications, waitlist, messaging, live control room), and `app/admin/`.
+
+---
+
+## 4. Database Relationship Overview
+
+```
+auth.users (Supabase-managed)
+  └─ public.users (role: organizer | seller | admin)
+       └─ public.profiles (1:1 — display name, photo, bio, timezone)
+       ├─ public.organizer_profiles (1:1, only for organizers)
+       │    └─ public.raid_trains (1:many)
+       │         ├─ public.train_slots (1:many — the generated schedule)
+       │         │    ├─ seller_id → seller_profiles
+       │         │    └─ application_id → train_applications
+       │         ├─ public.train_applications (1:many)
+       │         ├─ public.waitlist_entries (1:many)
+       │         ├─ public.train_participants (1:many — the confirmed roster)
+       │         ├─ public.seller_history (1:many, organizer-private)
+       │         └─ public.train_activity_log (1:many, audit trail)
+       └─ public.seller_profiles (1:1, only for sellers)
+            ├─ train_slots.seller_id (a seller occupies at most one slot per train)
+            ├─ train_applications.seller_id
+            ├─ waitlist_entries.seller_id
+            ├─ train_participants.seller_id
+            └─ seller_history.seller_id
+
+public.notifications → user_id (recipient), optionally scoped to a raid_train_id
+public.favorites → user_id + raid_train_id (future: saved trains)
+```
+
+**Key constraints enforced at the database level (not just in application code):**
+- `train_slots (raid_train_id, seller_id)` is unique → a seller cannot hold two slots in the same train.
+- `train_applications (raid_train_id, seller_id)` is unique → a seller cannot apply twice to the same train.
+- `waitlist_entries (raid_train_id, seller_id)` is unique → one waitlist entry per seller per train.
+- `raid_trains.slug` is globally unique → every train gets a stable public URL.
+- A partial unique index on `train_slots` blocks two sellers from both being "active" (`confirmed`/`checked_in`/`live`/`completed`) on the same slot row.
+- `end_time > start_time` and `end_datetime > start_datetime` check constraints on trains and slots.
+- Foreign keys cascade sensibly: deleting a train cascades to its slots/applications/waitlist/participants/activity log; deleting a user cascades to their profile rows.
+
+**Private data boundary:** `train_applications.organizer_notes` and `train_participants.organizer_notes` are the fields the spec calls out as organizer-only (e.g., "seller was 20 minutes late last time"). Postgres RLS is row-level, not column-level, so those two columns are revoked from the general `SELECT` grant and re-exposed to sellers only through `train_applications_seller_view` / `train_participants_public_view`, which omit the notes column entirely. `seller_history` (the full private attendance/reliability record) is a separate table with an organizer-only RLS policy — never queried by seller or public-facing code at all.
+
+---
+
+## 5. Supabase SQL Schema & RLS
+
+Two migration files, meant to be run in order:
+
+- **`supabase/migrations/0001_initial_schema.sql`** — all Phase 1 tables (`users`, `profiles`, `seller_profiles`, `organizer_profiles`, `raid_trains`, `train_slots`, `train_applications`, `waitlist_entries`, `train_participants`, `notifications`, `seller_history`, `train_activity_log`, `favorites`), enums for every status field in the spec (slot status, application status, waitlist status, attendance status, etc.), `updated_at` triggers, and a trigger that automatically creates `public.users` + `public.profiles` rows whenever someone signs up via Supabase Auth.
+- **`supabase/migrations/0002_row_level_security.sql`** — enables RLS on every table and defines policies for: organizers managing only trains they own, sellers managing only their own profile/applications/waitlist entries, the public seeing only `published` trains with `public`/`unlisted` visibility, and private notes/history staying invisible to anyone but the owning organizer or an admin. Includes `security definer` helper functions (`is_admin()`, `owns_organizer_profile()`, `owns_seller_profile()`, `organizes_train()`, `train_is_publicly_visible()`) so policies stay readable and avoid recursive RLS evaluation.
+
+**Not yet included (flagged for Phase 2+ migrations, not silently dropped):**
+- The atomic "hold a slot for N minutes while a seller fills out the form" function — needs a `security definer` Postgres function with a `SELECT ... FOR UPDATE` to be race-condition-safe, planned as `0003_slot_holds.sql` alongside the signup flow.
+- Private (invite-only) train access via `invite_code` — the column exists now; the lookup function that lets a non-organizer view a private train given a valid code ships with the visibility/signup-mode UI in Phase 2.
+- Automatic waitlist replacement (offer → timed acceptance window → cascade) — explicitly deferred to a post-MVP phase per the spec.
+
+---
+
+## 6. Local Setup Guide
+
+### Prerequisites
+- Node.js 20+
+- A free [Supabase](https://supabase.com) account
+- (Optional but recommended) the [Supabase CLI](https://supabase.com/docs/guides/cli) — `npm install -g supabase`
+
+### Step 1 — Install dependencies
+```bash
+cd raid-train-conductor
+npm install
+```
+
+### Step 2 — Create a Supabase project
+1. Go to supabase.com/dashboard → **New project**.
+2. Note the **Project URL** and **anon public key** from Project Settings → API. You'll also want the **service role key** (same page) — keep this one secret, server-only.
+
+### Step 3 — Run the migrations
+Easiest path (no CLI needed): open the Supabase Dashboard → **SQL Editor**, and run each file in `supabase/migrations/` **in order** (`0001` through `0006`), pasting the full contents of one file, running it, then moving to the next. Order matters — later migrations alter tables and functions the earlier ones create.
+
+CLI path, if you prefer version-controlled migrations:
+```bash
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+```
+
+### Step 4 — Configure email confirmation (recommended default: ON)
+In Supabase Dashboard → Authentication → Providers → Email, confirm "Confirm email" is enabled. The app's registration flow already handles both cases (instant session vs. "check your email"), so you can also turn it off for faster local testing.
+
+### Step 5 — Set environment variables
+```bash
+cp .env.example .env
+```
+Fill in:
+- `NEXT_PUBLIC_SUPABASE_URL` — your project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the anon public key
+- `SUPABASE_SERVICE_ROLE_KEY` — the service role key (server-only; never referenced from any Client Component)
+- `NEXT_PUBLIC_SITE_URL` — `http://localhost:3000` for local dev
+- `RESEND_API_KEY` / `EMAIL_FROM` — get a free API key at [resend.com](https://resend.com) and verify a sending domain (or use their test domain while developing). Leave `RESEND_API_KEY` unset if you just want to see notifications logged without actually emailing anyone — `sendEmail` no-ops gracefully.
+- `CRON_SECRET` — any random string; must match whatever your scheduler sends as `Authorization: Bearer <value>` when it calls `/api/cron/send-reminders`. Leave unset for local testing (the check is skipped) — just don't leave it unset in production, since the route would then be callable by anyone who finds the URL.
+
+### Step 6 — Wire up the reminders cron (Phase 5, production only)
+`vercel.json` already schedules `GET /api/cron/send-reminders` every 15 minutes when deployed to Vercel — set `CRON_SECRET` in your Vercel project's environment variables and Vercel adds the matching header automatically. Deploying elsewhere? Point any scheduler (a hosting provider's cron, GitHub Actions on a schedule, an external uptime-style pinger) at the same route with `Authorization: Bearer <CRON_SECRET>`. Locally, just hit `curl http://localhost:3000/api/cron/send-reminders` whenever you want to test it manually — the `_sent_at` columns keep repeated calls safe.
+
+### Step 6 — Point Supabase Auth redirects at your app
+In Supabase Dashboard → Authentication → URL Configuration, add `http://localhost:3000/auth/callback` to the Redirect URLs list (and your production URL later).
+
+### Step 7 — Run it
+```bash
+npm run dev
+```
+Visit `http://localhost:3000`. Register an account, choose **Organizer** or **Seller**, confirm your email if required, log in, and you'll land on a dashboard that prompts you to complete your role-specific profile (organizer name/contact, or Whatnot username/profile URL).
+
+### Step 8 — Typecheck
+```bash
+npm run typecheck
+```
+
+### Regenerating types after future schema changes
+```bash
+export SUPABASE_PROJECT_ID=your-project-ref
+npm run supabase:types
+```
+This overwrites `types/database.types.ts` with Supabase's generated types once the CLI is linked — the hand-written version in this stage is a faithful match to the SQL but should be replaced by the generated one as soon as you're linked to a real project.
+
+---
+
+## 7. Development Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| 1 | Foundation — auth, roles, profiles, schema, RLS, dashboard shells | **Done** |
+| 2 | Train creation — wizard, slot generator, public train page, clone | **Done** |
+| 3 | Seller signup — applications, slot claiming with holds, waitlist, confirmation | **Done** |
+| 4 | Organizer management — schedule manager, drag-and-drop, replacements, missing-info tracking | **Done** |
+| 5 | Reminders & check-in — Resend integration, scheduled reminders, check-in flow | **Done (this stage)** |
+| 6 | Live control room — live/next seller panel, countdown, status controls, activity log | Next |
+| 7 | Testing & launch — mobile/permissions/timezone/email test passes, analytics, deploy | Planned |
+
+Each phase after this one will ship as its own stage: an explanation of what's being built, the files touched, complete code, migrations, env vars, validation, error handling, and a testing checklist — building directly on top of what's in this repository rather than restarting.
+
+---
+
+## 8. What Shipped in Phase 1 (Foundation)
+
+- Full Phase 1 database schema and RLS policies (§5)
+- Working email/password registration (with role selection), login, password reset, and email-confirmation callback handling, all via Supabase Auth
+- Route protection middleware that redirects signed-out users away from `/dashboard/*` and signed-in users away from `/login`/`/register`
+- An organizer dashboard shell that prompts new organizers to complete their profile, then shows a stats overview (currently zeroed — real numbers arrive with Phase 2 trains)
+- A seller dashboard shell with the same completion-prompt pattern, requiring Whatnot username + profile URL before a seller can be confirmed for anything later
+- A shared, accessible, mobile-first UI kit (`components/ui`) used by every form in this stage and reusable for every later one
+## 9. What Shipped in Phase 2 (Train Creation)
+
+- **Migration `0003_train_requirements_and_storage.sql`**: adds seller-requirement columns to `raid_trains` (`requires_whatnot_profile`, `requires_show_link`, `sales_level_requirement`, `additional_questions`, `break_minutes`) and a public `train-images` Storage bucket with owner-scoped upload/update/delete policies (path convention `{user_id}/{filename}`) plus public read.
+- **`lib/trains/generate-slots.ts`**: pure function that turns a date + start/end time + timezone + slot length + break into a concrete, UTC-anchored list of slots, using `date-fns-tz`'s `fromZonedTime` so a train scheduled in `America/Chicago` stores correctly regardless of the server's own timezone. Reused client-side for the live wizard preview and server-side at save time — same function, same output, no drift.
+- **`lib/trains/slug.ts`**: slugifies the train name for its public URL, retries with a short random suffix on collision, and generates the invite code for private trains.
+- **Six-step create-train wizard** (`components/organizer/train-wizard/`): a single native `<form>` with all steps kept mounted (toggled via `hidden`, never unmounted) so no field values are lost switching steps, per-step client-side validation before advancing, a live "N slots will be created" preview on the schedule step, image upload straight to Supabase Storage, and Save Draft / Publish as distinct submit buttons feeding one Server Action.
+- **Server Actions** (`app/dashboard/organizer/trains/new/actions.ts`, `app/dashboard/organizer/trains/[trainId]/actions.ts`): `createTrain`, `updateTrain`, `setTrainStatus` (publish/unpublish/cancel), `deleteTrain`, and `cloneTrain` — all revalidate server-side with the same zod schema the client uses, so a disabled JS browser or a tampered request still can't create an invalid train. Editing is schedule-locked once a train is published (name/rules/requirements/visibility stay editable; date/time/slot length don't) so a shared public link never silently points at a different schedule.
+- **Organizer pages**: the dashboard now lists real trains with live open-slot counts; `/dashboard/organizer/trains/[trainId]` is the train overview (publish/unpublish/cancel/delete, invite-code display for private trains, clone-to-new-date form, read-only generated schedule); `/dashboard/organizer/trains/[trainId]/edit` reuses the wizard.
+- **Public train page** (`/train/[slug]`): server-rendered, respects RLS for public/unlisted trains automatically; private trains are resolved through the service-role admin client only after the invite code in `?code=` is verified server-side (never trust a client-side code check). Shows the live/next slot with a client-side countdown, the full schedule with status badges, share button (native share sheet with clipboard fallback), and train rules/cancellation policy.
+- **What's intentionally still a placeholder**: the "Apply for a slot" button on the public page is disabled with an explanatory label — seller applications, slot claiming, and the waitlist are Phase 3. The organizer schedule table shows time + status only; seller names populate once Phase 3 assigns sellers to slots.
+
+## 10. What Shipped in Phase 3 (Seller Signup)
+
+- **Migration `0004_seller_signup.sql`**: adds `train_applications.custom_answers` (jsonb) and six `SECURITY DEFINER` Postgres functions that are the *only* way seller-facing code can mutate `train_slots`, `train_applications`, `waitlist_entries`, and `train_participants` — sellers have no direct `UPDATE` grant on those tables (see 0002's RLS), so these functions are a narrow, validated doorway, not a bypass:
+  - `hold_train_slot(slot_id, hold_minutes)` — the race-safe claim. The atomic `UPDATE ... WHERE status = 'open' ... RETURNING` is what actually prevents double-booking: Postgres serializes concurrent updates to the same row, so if two sellers click the same slot within the same second, exactly one succeeds and the other gets a clean "that slot was just taken" error instead of a corrupted booking.
+  - `release_train_slot`, `release_expired_holds_for_train` — give back a hold voluntarily, or lazily clean up abandoned ones (called whenever a train's slots are listed, so expired 10-minute holds don't block other sellers from seeing the slot as open again).
+  - `submit_train_application` — locks the slot row (`FOR UPDATE`), re-verifies the caller still holds it and the hold hasn't expired, then either confirms instantly (`open` signup mode) or marks it pending (`approval_required`), inserting the `train_participants` row only on instant confirmation.
+  - `join_train_waitlist`, `cancel_train_participation` — waitlist join with position assignment, and self-service cancellation that frees the slot, withdraws the application, and writes a private `seller_history` row (notice-hours computed from how far out the cancellation happened) — never a public score, per the spec.
+- **Apply flow** (`/train/[slug]/apply`): resolves the same way the public page does (public/unlisted via RLS, private via a server-verified invite code), then branches on the seller's current state — already confirmed, pending, waitlisted, or new — before ever showing the slot picker. Claiming a slot holds it and redirects to a form with a live countdown to the hold's expiry; letting the countdown lapse and trying to submit anyway is caught by `submit_train_application`'s re-check, not just trusted from the client.
+- **Seller dashboard**: real numbers now (upcoming trains, pending applications, waitlist position), plus `/dashboard/seller/trains` (browse + search + category filter — the "basic train directory" MVP item), `/applications`, `/waitlist`, `/upcoming` (with a cancel button wired to `cancel_train_participation`), and `/past` (reads from `seller_history`).
+- **Organizer overview**: the schedule table now resolves and displays the seller name + Whatnot username for held/pending/confirmed slots, and the stats row shows real pending-application and waitlist counts — both organizer dashboard pages pull from the same live data sellers are creating.
+- **What's intentionally still a placeholder**: approving/rejecting pending applications, offering a waitlist slot, and drag-and-drop reordering are all organizer-side actions that read fine right now (counts are real) but don't have management UI yet — that's Phase 4. Invite-only trains show "ask the organizer for an invite" since the organizer-side invite/assign tool is also Phase 4. Actual emails aren't sent yet — `submit_train_application` writes a real row to the `notifications` table (correct recipient, subject, message) but nothing delivers it until Resend is wired up in Phase 5.
+
+## 11. What Shipped in Phase 4 (Organizer Management)
+
+- **Migration `0005_organizer_management.sql`**: four more `SECURITY DEFINER` functions, needed only where a seller must act on rows RLS otherwise reserves for organizers, or where several rows have to move together atomically:
+  - `accept_waitlist_offer` / `decline_waitlist_offer` — a seller responding to a manually-offered slot. Accepting confirms the slot and creates the application + participant rows in one transaction; declining frees the slot immediately so the organizer can offer it to the next person without waiting on you.
+  - `release_expired_waitlist_offers_for_train` — the same lazy-cleanup pattern as the slot holds from Phase 3: if a seller never responds, the next page load quietly reverts the offer and reopens the slot.
+  - `swap_train_slot_sellers` — the operation behind the schedule manager's drag-and-drop. Locks both slot rows, swaps whichever seller/application is on each, and keeps `train_applications.slot_id` and `train_participants.slot_id` pointed at the right row afterward — dragging a seller card from the 10:00 slot onto the 10:30 slot doesn't leave their application or participant record still referencing the old time.
+  - Everything else in this phase (approve/reject an application, reassign to a different open slot, move to waitlist, offer a waitlist slot, remove a confirmed seller, mark a slot unavailable) runs as plain organizer-authenticated writes — organizers already have `UPDATE` rights on trains they own from Phase 1's RLS, so no bypass function is needed there.
+- **Applications management** (`/dashboard/organizer/trains/[trainId]/applications`): every application for a train, with the seller's Whatnot info, notes, and answers to any custom questions the organizer asked during train creation. Pending ones get Approve / Reject / Move-to-waitlist buttons; pending or approved ones can be reassigned to any other open slot from a dropdown.
+- **Waitlist management** (`.../waitlist`): entries in line order, with a dropdown to offer any specific open slot to a specific waitlisted seller. Offering holds that slot for them for 48 hours and writes a real `notifications` row; the seller sees it on their own waitlist page (Phase 3's page, now with Accept/Decline buttons) and can accept or decline right there.
+- **Schedule manager** (`.../schedule`): drag-and-drop, built on `@dnd-kit/core` (pointer + touch sensors, so it works on a phone during a live event, not just a mouse). Dragging a seller's card onto another time slot swaps them; the swap applies optimistically in the UI while `swap_train_slot_sellers` reconciles it server-side. Each slot also has Remove-seller (frees the slot, withdraws the application, logs `seller_history`) and Mark-unavailable/Reopen for slots the organizer wants to pull out of rotation entirely (a bye, a break the auto-generator didn't account for, etc.).
+- **Missing-information card** on the train overview: flags a missing thumbnail, any pending applications still awaiting review, and confirmed sellers who haven't supplied a show link yet (only counted when the train's settings actually require one) — each item links straight to where you'd fix it.
+- **What's intentionally still a placeholder**: "missing check-in" isn't tracked yet because check-in itself doesn't exist until Phase 5. Bulk messaging ("email all sellers," reminders) isn't built here either — the spec places that with Phase 5's Resend integration, not organizer management, so it stays there rather than getting split across two phases.
+
+## 12. What Shipped in Phase 5 (Reminders and Check-in)
+
+- **Migration `0006_reminders_and_checkin.sql`**: adds `reminder_24h_sent_at`, `reminder_2h_sent_at`, and `checkin_reminder_sent_at` to `train_participants` — one nullable timestamp per reminder type, each set exactly once, which is what lets the cron route (below) run as often as you like without ever double-sending. Also removes the old direct `insert into notifications` calls from `submit_train_application` and `accept_waitlist_offer` now that `lib/notifications/send.ts` is the single place a notification gets created and delivered.
+- **Email delivery** (`lib/email/resend.ts`): a thin `fetch` wrapper around the Resend API — no SDK dependency. If `RESEND_API_KEY` isn't set, it logs a warning and returns `{ sent: false }` instead of throwing, so the app runs fully in development without an email provider configured; nothing else in the request path breaks.
+- **Notification templates** (`lib/notifications/templates.ts`): one function, `buildNotificationContent`, covering every notification type in the spec (signup confirmation, application approved/rejected, added to waitlist, slot changed, 24h/2h reminders, check-in reminder, you're-next, cancellation, replacement offer, and a free-form "custom" type for the messaging page) — each returns a subject, an HTML email body, and a plain-text fallback stored on the `notifications` row.
+- **`lib/notifications/send.ts`**: `sendNotification()` is now the only path that writes a `notifications` row and attempts delivery. It uses the service-role client deliberately — an organizer approving a seller's application is writing a notification *for* the seller, and a seller cancelling is writing one *for* the organizer, so no single RLS insert policy covers every direction without a lot of extra policy surface. `getUserIdForSeller` / `getUserIdForOrganizer` resolve a profile id to the actual `auth.users` id every caller needs. Every seller- and organizer-facing action from Phases 3 and 4 (apply, waitlist join, approve, reject, waitlist-add, slot move, offer, cancel, remove-from-slot) now calls through this one function instead of writing its own ad hoc notification.
+- **Seller check-in** (`/dashboard/seller/upcoming`): each upcoming slot shows whether check-in is open yet (`now >= slot start − train.check_in_minutes_before`), a checked-in / not-yet-open / check-in-now badge, and a working "Check in" button (`checkInToTrain` action) once the window opens.
+- **Organizer manual check-in** (`.../schedule`): the schedule manager now shows each seller's check-in status and gives the organizer a manual Check-in / Undo-check-in button for the door-staff case — a seller shows up but never got the email, or checked in and then had a connection drop.
+- **Scheduled reminders** (`app/api/cron/send-reminders/route.ts`): scans confirmed `train_participants` for slots starting in the next two days, and for each one sends whichever of the 24-hour reminder, 2-hour reminder, or check-in-opened reminder is now due — gated by the three `_sent_at` columns so nothing repeats. Protected by a `CRON_SECRET` bearer-token check (skipped only if the env var is unset, for local testing); `vercel.json` schedules it to run every 15 minutes. Any other host can point its own scheduler at the same route with the same header.
+- **Organizer messaging** (`/dashboard/organizer/trains/[trainId]/messaging`): email every confirmed seller at once with a custom subject/message, email one seller by name, and one-click "quick sends" per seller for a reminder, a check-in notice, or a you're-up-next alert — all going through the same `sendNotification`/template pipeline as the automated emails, so a manually sent reminder looks identical to a cron-triggered one.
+- **What's intentionally still a placeholder**: emails render as plain HTML with no visual branding beyond a text header — a themed template pass is a nice-to-have, not blocking. There's no in-app notification center yet (only email), and no SMS/push/Discord delivery even though the `delivery_method` column already supports them — Resend-only was the Phase 5 scope. The "you're next" notification has a template and a manual quick-send button, but nothing yet fires it automatically when a slot goes live — that's the live control room's job in Phase 6, since it needs the same "what's currently live" state the control room is being built around.
+

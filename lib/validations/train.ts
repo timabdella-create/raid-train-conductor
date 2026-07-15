@@ -1,0 +1,121 @@
+import { z } from "zod";
+
+export const TRAIN_CATEGORIES = [
+  "Plush",
+  "Clothing",
+  "Vintage",
+  "Toys",
+  "Storage Units",
+  "Trading Cards",
+  "Jewelry",
+  "Collectibles",
+  "Books",
+  "Home Decor",
+  "General Merchandise",
+] as const;
+
+export const CHECK_IN_PRESETS = [
+  { label: "24 hours before the train", minutes: 1440 },
+  { label: "2 hours before my slot", minutes: 120 },
+  { label: "30 minutes before my slot", minutes: 30 },
+] as const;
+
+// ---------------------------------------------------------------------------
+// Step 1 — Basic details
+// ---------------------------------------------------------------------------
+export const basicDetailsSchema = z.object({
+  name: z.string().trim().min(3, "Give your train a name (at least 3 characters).").max(100),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  theme: z.string().trim().max(100).optional().or(z.literal("")),
+  category: z.enum(TRAIN_CATEGORIES, { required_error: "Choose a category." }),
+  imageUrl: z.string().trim().url().optional().or(z.literal("")),
+});
+export type BasicDetailsInput = z.infer<typeof basicDetailsSchema>;
+
+// ---------------------------------------------------------------------------
+// Step 2 — Date & schedule
+// ---------------------------------------------------------------------------
+export const scheduleSchema = z
+  .object({
+    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date."),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Choose a start time."),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/, "Choose an end time."),
+    timezone: z.string().min(1, "Choose a time zone."),
+    slotDurationMinutes: z.coerce
+      .number()
+      .int()
+      .min(5, "Slots must be at least 5 minutes.")
+      .max(240, "Slots must be 4 hours or less."),
+    breakMinutes: z.coerce.number().int().min(0).max(120).default(0),
+  })
+  .refine((data) => data.endTime > data.startTime, {
+    message: "End time must be after start time.",
+    path: ["endTime"],
+  });
+export type ScheduleInput = z.infer<typeof scheduleSchema>;
+
+// ---------------------------------------------------------------------------
+// Step 3 — Signup settings
+// ---------------------------------------------------------------------------
+export const signupSettingsSchema = z.object({
+  signupMode: z.enum(["open", "approval_required", "invite_only", "waitlist_only"], {
+    required_error: "Choose a signup mode.",
+  }),
+  visibility: z.enum(["public", "unlisted", "private"], {
+    required_error: "Choose who can view this train.",
+  }),
+});
+export type SignupSettingsInput = z.infer<typeof signupSettingsSchema>;
+
+// ---------------------------------------------------------------------------
+// Step 4 — Seller requirements
+// ---------------------------------------------------------------------------
+export const requirementsSchema = z.object({
+  requiresWhatnotProfile: z.boolean().default(true),
+  requiresShowLink: z.boolean().default(true),
+  salesLevelRequirement: z.string().trim().max(100).optional().or(z.literal("")),
+  additionalQuestions: z
+    .array(z.string().trim().min(1).max(200))
+    .max(5, "Up to 5 additional questions.")
+    .default([]),
+});
+export type RequirementsInput = z.infer<typeof requirementsSchema>;
+
+// ---------------------------------------------------------------------------
+// Step 5 — Rules
+// ---------------------------------------------------------------------------
+export const rulesSchema = z.object({
+  rules: z.string().trim().max(5000).optional().or(z.literal("")),
+  cancellationPolicy: z.string().trim().max(5000).optional().or(z.literal("")),
+  checkInMinutesBefore: z.coerce.number().int().min(0).max(10080).default(120),
+});
+export type RulesInput = z.infer<typeof rulesSchema>;
+
+// ---------------------------------------------------------------------------
+// Combined — what the server action ultimately receives
+// ---------------------------------------------------------------------------
+export const createTrainSchema = basicDetailsSchema
+  .and(scheduleSchema.innerType().partial({ breakMinutes: true }))
+  .and(signupSettingsSchema)
+  .and(requirementsSchema)
+  .and(rulesSchema)
+  .and(z.object({ action: z.enum(["draft", "publish"]) }));
+
+export type CreateTrainInput = BasicDetailsInput &
+  ScheduleInput &
+  SignupSettingsInput &
+  RequirementsInput &
+  RulesInput & { action: "draft" | "publish" };
+
+export const COMMON_TIMEZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "America/Toronto",
+  "America/Vancouver",
+  "Europe/London",
+  "UTC",
+] as const;

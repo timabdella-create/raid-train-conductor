@@ -1,0 +1,180 @@
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { SlotStatusBadge } from "@/components/train/status-badge";
+import { CountdownTimer } from "@/components/train/countdown-timer";
+import { ShareButtons } from "@/components/train/share-buttons";
+import { formatSlotTime } from "@/lib/trains/generate-slots";
+import { loadPublicTrain } from "@/lib/trains/load-public-train";
+import type { Database } from "@/types/database.types";
+
+type RaidTrainRow = Database["public"]["Tables"]["raid_trains"]["Row"];
+type TrainSlotRow = Database["public"]["Tables"]["train_slots"]["Row"];
+
+function findLiveAndNextSlot(slots: TrainSlotRow[]) {
+  const now = Date.now();
+  const live = slots.find((s) => s.status === "live");
+  const upcoming = slots
+    .filter((s) => new Date(s.start_datetime).getTime() > now)
+    .sort((a, b) => new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime())[0];
+  return { live, next: upcoming };
+}
+
+export default async function PublicTrainPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { code?: string };
+}) {
+  const result = await loadPublicTrain(params.slug, searchParams.code);
+  if (!result) notFound();
+
+  const { train, slots, gatedByCode } = result as { train: RaidTrainRow; slots: TrainSlotRow[]; gatedByCode: boolean };
+  const { live, next } = findLiveAndNextSlot(slots);
+  const openCount = slots.filter((s) => s.status === "open").length;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const publicUrl = `${siteUrl}/train/${train.slug}`;
+
+  return (
+    <main className="min-h-screen bg-background pb-16">
+      {train.image_url && (
+        <div className="relative h-48 w-full overflow-hidden sm:h-64">
+          <Image src={train.image_url} alt={train.name} fill className="object-cover" priority />
+        </div>
+      )}
+
+      <div className="mx-auto max-w-3xl px-4">
+        <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight">{train.name}</h1>
+              {gatedByCode && <Badge tone="warning">Private</Badge>}
+            </div>
+            <p className="text-muted-foreground">
+              {train.category}
+              {train.theme && ` • ${train.theme}`}
+            </p>
+          </div>
+          <ShareButtons url={publicUrl} title={train.name} />
+        </div>
+
+        {train.description && <p className="mt-4">{train.description}</p>}
+
+        <dl className="mt-6 grid grid-cols-2 gap-4 rounded-md border border-border p-4 text-sm sm:grid-cols-4">
+          <div>
+            <dt className="text-muted-foreground">Date</dt>
+            <dd className="font-medium">{train.event_date}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Time</dt>
+            <dd className="font-medium">
+              {train.start_time.slice(0, 5)}–{train.end_time.slice(0, 5)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Time zone</dt>
+            <dd className="font-medium">{train.timezone}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Open slots</dt>
+            <dd className="font-medium">{openCount}</dd>
+          </div>
+        </dl>
+
+        {(live || next) && (
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {live && (
+              <div className="rounded-md border-2 border-destructive/40 bg-destructive/5 p-4">
+                <Badge tone="danger">Live now</Badge>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Slot {live.position + 1} • ends {formatSlotTime(live.end_datetime, train.timezone)}
+                </p>
+              </div>
+            )}
+            {next && (
+              <div className="rounded-md border border-border p-4">
+                <Badge tone="info">Up next</Badge>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Slot {next.position + 1} • {formatSlotTime(next.start_datetime, train.timezone)}
+                </p>
+                <div className="mt-2">
+                  <CountdownTimer target={next.start_datetime} label="Starts in" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-8 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Schedule</h2>
+          {train.signup_mode === "invite_only" ? (
+            <Badge tone="neutral">Invite only</Badge>
+          ) : train.signup_mode === "waitlist_only" || openCount === 0 ? (
+            <Link href={`/train/${train.slug}/apply${gatedByCode ? `?code=${searchParams.code}` : ""}`}>
+              <Button variant="secondary">Join waitlist</Button>
+            </Link>
+          ) : (
+            <Link href={`/train/${train.slug}/apply${gatedByCode ? `?code=${searchParams.code}` : ""}`}>
+              <Button>Apply for a slot</Button>
+            </Link>
+          )}
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-md border border-border">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="px-4 py-2">#</th>
+                <th className="px-4 py-2">Time</th>
+                <th className="px-4 py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slots.map((slot) => (
+                <tr key={slot.id} className="border-t border-border">
+                  <td className="px-4 py-2 text-muted-foreground">{slot.position + 1}</td>
+                  <td className="px-4 py-2">
+                    {formatSlotTime(slot.start_datetime, train.timezone)} –{" "}
+                    {formatSlotTime(slot.end_datetime, train.timezone)}
+                  </td>
+                  <td className="px-4 py-2">
+                    <SlotStatusBadge status={slot.status} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {(train.rules || train.cancellation_policy) && (
+          <div className="mt-8 space-y-4">
+            {train.rules && (
+              <div>
+                <h3 className="font-semibold">Train rules</h3>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{train.rules}</p>
+              </div>
+            )}
+            {train.cancellation_policy && (
+              <div>
+                <h3 className="font-semibold">Cancellation policy</h3>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                  {train.cancellation_policy}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="mt-10 text-center text-xs text-muted-foreground">
+          Powered by{" "}
+          <Link href="/" className="hover:underline">
+            Raid Train Conductor
+          </Link>
+        </p>
+      </div>
+    </main>
+  );
+}

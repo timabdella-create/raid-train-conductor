@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
+import { TrainActivity } from "@/components/discovery/train-activity";
 
 const STEPS = [
   {
@@ -113,6 +114,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <TrainActivity />
 
       <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <div className="mx-auto max-w-2xl text-center">

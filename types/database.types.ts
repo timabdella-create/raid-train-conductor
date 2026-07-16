@@ -296,6 +296,20 @@ export interface Database {
           completed_trains: number;
         }[]
       >;
+      get_current_trains: Fn<
+        { p_limit?: number },
+        {
+          train_id: string; name: string; slug: string; category: string | null;
+          event_date: string; timezone: string; organizer_name: string;
+        }[]
+      >;
+      get_upcoming_trains: Fn<
+        { p_limit?: number },
+        {
+          train_id: string; name: string; slug: string; category: string | null;
+          event_date: string; start_time: string; timezone: string; organizer_name: string;
+        }[]
+      >;
     };
   };
 }

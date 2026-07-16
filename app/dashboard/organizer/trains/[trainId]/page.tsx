@@ -159,7 +159,7 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
       </div>
 
       {missingInfoTotal > 0 && (
-        <Card className="border-amber-300 bg-amber-50">
+        <Card className="border-amber-500/40 bg-amber-500/10">
           <p className="mb-2 text-sm font-semibold">Missing information ({missingInfoTotal})</p>
           <ul className="space-y-1 text-sm text-muted-foreground">
             {missingThumbnail > 0 && (

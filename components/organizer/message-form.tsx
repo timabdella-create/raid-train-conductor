@@ -34,7 +34,7 @@ export function MessageAllForm({ action }: { action: Action }) {
       </div>
       <div className="flex items-center gap-3">
         <SubmitButton>Email all confirmed sellers</SubmitButton>
-        {state.success && <p className="text-sm text-green-700">{state.success}</p>}
+        {state.success && <p className="text-sm text-emerald-400">{state.success}</p>}
         {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       </div>
     </form>
@@ -74,7 +74,7 @@ export function MessageOneForm({ action, sellers }: { action: Action; sellers: S
       </div>
       <div className="flex items-center gap-3">
         <SubmitButton>Send</SubmitButton>
-        {state.success && <p className="text-sm text-green-700">{state.success}</p>}
+        {state.success && <p className="text-sm text-emerald-400">{state.success}</p>}
         {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       </div>
     </form>

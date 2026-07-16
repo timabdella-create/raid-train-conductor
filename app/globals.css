@@ -4,26 +4,28 @@
 
 @layer base {
   :root {
-    --background: 30 40% 98%;
-    --foreground: 222 30% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 30% 12%;
-    --primary: 258 90% 60%;
-    --primary-foreground: 0 0% 100%;
-    --muted: 220 20% 95%;
-    --muted-foreground: 220 10% 45%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 88%;
+    color-scheme: dark;
 
-    --accent: 328 85% 58%;
-    --accent-foreground: 0 0% 100%;
-    --electric: 174 85% 45%;
-    --electric-foreground: 222 40% 8%;
-    --hero-from: 258 90% 58%;
-    --hero-via: 288 80% 52%;
-    --hero-to: 328 85% 54%;
-    --hero-ink: 260 45% 8%;
+    --background: 240 6% 8%;
+    --foreground: 0 0% 95%;
+    --card: 240 5% 13%;
+    --card-foreground: 0 0% 95%;
+    --primary: 38 88% 58%;
+    --primary-foreground: 240 15% 9%;
+    --muted: 240 5% 16%;
+    --muted-foreground: 220 8% 68%;
+    --destructive: 0 75% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 24%;
+
+    --accent: 38 92% 62%;
+    --accent-foreground: 240 15% 9%;
+    --electric: 189 75% 50%;
+    --electric-foreground: 240 15% 9%;
+    --hero-from: 38 80% 40%;
+    --hero-via: 20 55% 32%;
+    --hero-to: 189 70% 32%;
+    --hero-ink: 240 8% 6%;
   }
 
   * {
@@ -58,7 +60,7 @@
   }
 
   .text-gradient {
-    background-image: linear-gradient(90deg, hsl(var(--hero-from)), hsl(var(--accent)));
+    background-image: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--electric)));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

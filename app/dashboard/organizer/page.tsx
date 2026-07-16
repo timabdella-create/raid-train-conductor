@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TrainStatusBadge } from "@/components/train/status-badge";
 import { OrganizerProfileForm } from "@/components/organizer/organizer-profile-form";
+import { Leaderboard } from "@/components/leaderboard/leaderboard";
 
 export default async function OrganizerDashboardPage() {
   const supabase = createClient();
@@ -105,6 +106,8 @@ export default async function OrganizerDashboardPage() {
           <p className="text-2xl font-semibold">{waitlistedSellers?.length ?? 0}</p>
         </Card>
       </div>
+
+      <Leaderboard />
 
       <Card>
         <CardHeader>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Leaderboard } from "@/components/leaderboard/leaderboard";
 
 const STEPS = [
   {
@@ -158,6 +159,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <Leaderboard variant="public" />
 
       <section className="relative overflow-hidden bg-hero-gradient px-6 py-20 text-center">
         <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">

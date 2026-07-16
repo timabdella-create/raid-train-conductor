@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SellerProfileForm } from "@/components/seller/seller-profile-form";
+import { Leaderboard } from "@/components/leaderboard/leaderboard";
 
 export default async function SellerDashboardPage() {
   const supabase = createClient();
@@ -92,6 +93,8 @@ export default async function SellerDashboardPage() {
           </Card>
         </Link>
       </div>
+
+      <Leaderboard />
 
       <Card>
         <CardHeader>

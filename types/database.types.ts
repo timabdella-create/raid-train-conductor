@@ -285,6 +285,17 @@ export interface Database {
       release_expired_waitlist_offers_for_train: Fn<{ p_train_id: string }, undefined>;
       swap_train_slot_sellers: Fn<{ p_slot_a_id: string; p_slot_b_id: string }, undefined>;
       complete_oauth_onboarding: Fn<{ p_role: UserRole }, undefined>;
+      get_top_organizers: Fn<
+        { p_limit?: number },
+        { organizer_id: string; organizer_name: string; completed_trains: number }[]
+      >;
+      get_top_sellers: Fn<
+        { p_limit?: number },
+        {
+          seller_id: string; display_name: string; whatnot_username: string | null;
+          completed_trains: number;
+        }[]
+      >;
     };
   };
 }

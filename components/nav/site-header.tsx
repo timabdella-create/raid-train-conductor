@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { RoleSwitcher } from "@/components/nav/role-switcher";
 
 export async function SiteHeader() {
   const supabase = createClient();
@@ -8,10 +9,16 @@ export async function SiteHeader() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let role: string | null = null;
+  let hasOrganizerProfile = false;
+  let hasSellerProfile = false;
+
   if (user) {
-    const { data } = await supabase.from("users").select("role").eq("id", user.id).single();
-    role = data?.role ?? null;
+    const [{ data: organizerProfile }, { data: sellerProfile }] = await Promise.all([
+      supabase.from("organizer_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+      supabase.from("seller_profiles").select("id").eq("user_id", user.id).maybeSingle(),
+    ]);
+    hasOrganizerProfile = !!organizerProfile;
+    hasSellerProfile = !!sellerProfile;
   }
 
   return (
@@ -20,19 +27,13 @@ export async function SiteHeader() {
         <Link href="/" className="font-semibold tracking-tight">
           🚂 Raid Train Conductor
         </Link>
-        <nav className="flex items-center gap-3 text-sm">
+        <nav className="flex items-center gap-4 text-sm">
           {user ? (
             <>
-              {role === "organizer" && (
-                <Link href="/dashboard/organizer" className="hover:underline">
-                  Organizer dashboard
-                </Link>
-              )}
-              {role === "seller" && (
-                <Link href="/dashboard/seller" className="hover:underline">
-                  Seller dashboard
-                </Link>
-              )}
+              <RoleSwitcher
+                hasOrganizerProfile={hasOrganizerProfile}
+                hasSellerProfile={hasSellerProfile}
+              />
               <SignOutButton />
             </>
           ) : (

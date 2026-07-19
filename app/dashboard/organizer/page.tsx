@@ -14,12 +14,10 @@ export default async function OrganizerDashboardPage() {
 
   if (!user) redirect("/login");
 
-  const { data: userRow } = await supabase.from("users").select("role").eq("id", user.id).single();
-
-  if (userRow?.role !== "organizer" && userRow?.role !== "admin") {
-    redirect("/dashboard/seller");
-  }
-
+  // No role gate here on purpose — anyone can have an organizer profile
+  // alongside a seller profile (dual-role support). If they don't have one
+  // yet, the form below handles first-time setup regardless of their
+  // `users.role` default.
   const { data: organizerProfile } = await supabase
     .from("organizer_profiles")
     .select("id, organizer_name, whatnot_username, contact_email")

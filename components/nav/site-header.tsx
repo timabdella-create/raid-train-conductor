@@ -34,6 +34,9 @@ export async function SiteHeader() {
                 hasOrganizerProfile={hasOrganizerProfile}
                 hasSellerProfile={hasSellerProfile}
               />
+              <Link href="/dashboard/profile" className="text-muted-foreground hover:text-foreground">
+                Edit profile
+              </Link>
               <SignOutButton />
             </>
           ) : (

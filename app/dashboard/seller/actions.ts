@@ -20,7 +20,10 @@ export type SellerProfileFormState = {
   fieldErrors?: Record<string, string>;
 };
 
-export async function createSellerProfile(
+// Handles both first-time setup and later edits: upserting on the
+// user_id unique constraint means an existing profile gets updated in
+// place (same row, same id) rather than duplicated.
+export async function saveSellerProfile(
   _prevState: SellerProfileFormState,
   formData: FormData
 ): Promise<SellerProfileFormState> {
@@ -47,18 +50,22 @@ export async function createSellerProfile(
     return { fieldErrors };
   }
 
-  const { error } = await supabase.from("seller_profiles").insert({
-    user_id: user.id,
-    whatnot_username: parsed.data.whatnotUsername,
-    whatnot_profile_url: parsed.data.whatnotProfileUrl,
-    seller_category: parsed.data.sellerCategory || null,
-  });
+  const { error } = await supabase.from("seller_profiles").upsert(
+    {
+      user_id: user.id,
+      whatnot_username: parsed.data.whatnotUsername,
+      whatnot_profile_url: parsed.data.whatnotProfileUrl,
+      seller_category: parsed.data.sellerCategory || null,
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     return { error: error.message };
   }
 
   revalidatePath("/dashboard/seller");
+  revalidatePath("/dashboard/profile");
   return {};
 }
 

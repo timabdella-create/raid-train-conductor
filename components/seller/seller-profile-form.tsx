@@ -1,24 +1,33 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { createSellerProfile, type SellerProfileFormState } from "@/app/dashboard/seller/actions";
+import { saveSellerProfile, type SellerProfileFormState } from "@/app/dashboard/seller/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const initialState: SellerProfileFormState = {};
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" isLoading={pending} className="w-full">
-      Save seller profile
+      {label}
     </Button>
   );
 }
 
-export function SellerProfileForm() {
-  const [state, formAction] = useFormState(createSellerProfile, initialState);
+export function SellerProfileForm({
+  defaultValues,
+}: {
+  defaultValues?: {
+    whatnotUsername: string;
+    whatnotProfileUrl: string;
+    sellerCategory: string | null;
+  };
+}) {
+  const [state, formAction] = useFormState(saveSellerProfile, initialState);
+  const isEditing = !!defaultValues;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,7 +39,13 @@ export function SellerProfileForm() {
 
       <div>
         <Label htmlFor="whatnotUsername">Whatnot username</Label>
-        <Input id="whatnotUsername" name="whatnotUsername" placeholder="@yourshop" required />
+        <Input
+          id="whatnotUsername"
+          name="whatnotUsername"
+          placeholder="@yourshop"
+          required
+          defaultValue={defaultValues?.whatnotUsername}
+        />
         {state.fieldErrors?.whatnotUsername && (
           <p className="mt-1 text-sm text-destructive">{state.fieldErrors.whatnotUsername}</p>
         )}
@@ -44,6 +59,7 @@ export function SellerProfileForm() {
           type="url"
           placeholder="https://www.whatnot.com/user/yourname"
           required
+          defaultValue={defaultValues?.whatnotProfileUrl}
         />
         {state.fieldErrors?.whatnotProfileUrl && (
           <p className="mt-1 text-sm text-destructive">{state.fieldErrors.whatnotProfileUrl}</p>
@@ -52,10 +68,15 @@ export function SellerProfileForm() {
 
       <div>
         <Label htmlFor="sellerCategory">Category (optional)</Label>
-        <Input id="sellerCategory" name="sellerCategory" placeholder="Plush, Trading Cards, Vintage…" />
+        <Input
+          id="sellerCategory"
+          name="sellerCategory"
+          placeholder="Plush, Trading Cards, Vintage…"
+          defaultValue={defaultValues?.sellerCategory ?? undefined}
+        />
       </div>
 
-      <SubmitButton />
+      <SubmitButton label={isEditing ? "Save changes" : "Save seller profile"} />
     </form>
   );
 }

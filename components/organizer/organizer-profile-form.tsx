@@ -1,24 +1,29 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { createOrganizerProfile, type OrganizerProfileFormState } from "@/app/dashboard/organizer/actions";
+import { saveOrganizerProfile, type OrganizerProfileFormState } from "@/app/dashboard/organizer/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 const initialState: OrganizerProfileFormState = {};
 
-function SubmitButton() {
+function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" isLoading={pending} className="w-full">
-      Save organizer profile
+      {label}
     </Button>
   );
 }
 
-export function OrganizerProfileForm() {
-  const [state, formAction] = useFormState(createOrganizerProfile, initialState);
+export function OrganizerProfileForm({
+  defaultValues,
+}: {
+  defaultValues?: { organizerName: string; whatnotUsername: string | null; contactEmail: string };
+}) {
+  const [state, formAction] = useFormState(saveOrganizerProfile, initialState);
+  const isEditing = !!defaultValues;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -30,7 +35,12 @@ export function OrganizerProfileForm() {
 
       <div>
         <Label htmlFor="organizerName">Organizer / shop name</Label>
-        <Input id="organizerName" name="organizerName" required />
+        <Input
+          id="organizerName"
+          name="organizerName"
+          required
+          defaultValue={defaultValues?.organizerName}
+        />
         {state.fieldErrors?.organizerName && (
           <p className="mt-1 text-sm text-destructive">{state.fieldErrors.organizerName}</p>
         )}
@@ -38,18 +48,28 @@ export function OrganizerProfileForm() {
 
       <div>
         <Label htmlFor="whatnotUsername">Whatnot username (optional)</Label>
-        <Input id="whatnotUsername" name="whatnotUsername" placeholder="@yourshop" />
+        <Input
+          id="whatnotUsername"
+          name="whatnotUsername"
+          defaultValue={defaultValues?.whatnotUsername ?? undefined}
+        />
       </div>
 
       <div>
         <Label htmlFor="contactEmail">Contact email</Label>
-        <Input id="contactEmail" name="contactEmail" type="email" required />
+        <Input
+          id="contactEmail"
+          name="contactEmail"
+          type="email"
+          required
+          defaultValue={defaultValues?.contactEmail}
+        />
         {state.fieldErrors?.contactEmail && (
           <p className="mt-1 text-sm text-destructive">{state.fieldErrors.contactEmail}</p>
         )}
       </div>
 
-      <SubmitButton />
+      <SubmitButton label={isEditing ? "Save changes" : "Save organizer profile"} />
     </form>
   );
 }

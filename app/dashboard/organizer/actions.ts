@@ -15,7 +15,10 @@ export type OrganizerProfileFormState = {
   fieldErrors?: Record<string, string>;
 };
 
-export async function createOrganizerProfile(
+// Handles both first-time setup and later edits: upserting on the
+// user_id unique constraint means an existing profile gets updated in
+// place (same row, same id) rather than duplicated.
+export async function saveOrganizerProfile(
   _prevState: OrganizerProfileFormState,
   formData: FormData
 ): Promise<OrganizerProfileFormState> {
@@ -42,17 +45,21 @@ export async function createOrganizerProfile(
     return { fieldErrors };
   }
 
-  const { error } = await supabase.from("organizer_profiles").insert({
-    user_id: user.id,
-    organizer_name: parsed.data.organizerName,
-    whatnot_username: parsed.data.whatnotUsername || null,
-    contact_email: parsed.data.contactEmail,
-  });
+  const { error } = await supabase.from("organizer_profiles").upsert(
+    {
+      user_id: user.id,
+      organizer_name: parsed.data.organizerName,
+      whatnot_username: parsed.data.whatnotUsername || null,
+      contact_email: parsed.data.contactEmail,
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     return { error: error.message };
   }
 
   revalidatePath("/dashboard/organizer");
+  revalidatePath("/dashboard/profile");
   return {};
 }

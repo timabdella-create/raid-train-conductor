@@ -382,3 +382,9 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - The organizer and seller profile forms now double as edit forms: `saveOrganizerProfile`/`saveSellerProfile` (renamed from `createOrganizerProfile`/`createSellerProfile`) upsert on the `user_id` unique constraint instead of always inserting, so submitting the form again updates the existing row in place rather than failing or duplicating it. `OrganizerProfileForm`/`SellerProfileForm` now accept an optional `defaultValues` prop to prefill for editing; both are unchanged (still create-only, unprefilled) when used from the first-time setup screens.
 - Added a new server action, `updateBasicProfile`, for the `profiles` table fields — the only ones that previously had no edit path at all.
 - "Edit profile" link added to the site header for any logged-in user.
+
+## 20. Wider Desktop Layout
+
+- The marketing homepage, public train page, leaderboard section, homepage activity widget, and the dashboard shell were all capped at `max-w-5xl`/`max-w-6xl` (1024–1152px), which left a lot of empty space on either side on large desktop monitors. Widened to `max-w-7xl` (1280px) for page-level sections, and `max-w-5xl` for the public train page (was `max-w-3xl`), so the site fills a wide screen properly instead of floating as a narrow column.
+- Left narrow on purpose: auth forms, the profile/edit page, and train-creation forms — these are single-column input flows that read worse stretched full-width, so they keep their existing narrower max-widths.
+- Homepage's feature grid also picked up a 4-column layout at the `lg` breakpoint (was capped at 2 columns even on wide screens).

@@ -29,7 +29,7 @@ export async function TrainActivity() {
 
   return (
     <section className="bg-muted/50 px-6 py-24 sm:py-32">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             What&apos;s happening right now

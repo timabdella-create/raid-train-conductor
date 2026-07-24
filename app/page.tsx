@@ -43,7 +43,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
       <section className="relative overflow-hidden bg-hero-mesh px-6 pb-24 pt-20 sm:pt-28">
-        <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
+        <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
           <span className="animate-fade-up rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/80 backdrop-blur">
             Built for Whatnot raid trains
           </span>
@@ -117,7 +117,7 @@ export default function HomePage() {
 
       <TrainActivity />
 
-      <section className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+      <section className="mx-auto max-w-7xl px-6 py-24 sm:py-32">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             From empty calendar to sold-out lineup
@@ -139,7 +139,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-muted/50 px-6 py-24 sm:py-32">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
               Everything a raid train actually needs
@@ -149,7 +149,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-2">
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map((feature) => (
               <div
                 key={feature.title}

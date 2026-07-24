@@ -23,7 +23,7 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         <Link href="/" className="font-semibold tracking-tight">
           🚂 Raid Train Conductor
         </Link>

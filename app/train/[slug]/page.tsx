@@ -58,7 +58,7 @@ export default async function PublicTrainPage({
         )}
 
         <div className="absolute inset-x-0 bottom-0 px-4 pb-4 sm:px-6">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-4xl">
                 {train.name}
@@ -73,7 +73,7 @@ export default async function PublicTrainPage({
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-5xl px-4">
         <div className="mt-4 flex justify-end">
           <ShareButtons url={publicUrl} title={train.name} />
         </div>

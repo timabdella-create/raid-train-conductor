@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-export function RegisterForm() {
+export function RegisterForm({ defaultRole }: { defaultRole?: "seller" | "organizer" }) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
@@ -18,11 +18,14 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: "seller" },
+    defaultValues: { role: defaultRole ?? "seller" },
   });
+
+  const selectedRole = watch("role");
 
   async function onSubmit(values: RegisterInput) {
     setFormError(null);
@@ -137,7 +140,7 @@ export function RegisterForm() {
       </div>
 
       <Button type="submit" isLoading={isSubmitting} className="w-full">
-        Create account
+        {selectedRole === "organizer" ? "Create My Organizer Account" : "Create My Free Seller Account"}
       </Button>
     </form>
   );

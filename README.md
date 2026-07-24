@@ -388,3 +388,9 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - The marketing homepage, public train page, leaderboard section, homepage activity widget, and the dashboard shell were all capped at `max-w-5xl`/`max-w-6xl` (1024–1152px), which left a lot of empty space on either side on large desktop monitors. Widened to `max-w-7xl` (1280px) for page-level sections, and `max-w-5xl` for the public train page (was `max-w-3xl`), so the site fills a wide screen properly instead of floating as a narrow column.
 - Left narrow on purpose: auth forms, the profile/edit page, and train-creation forms — these are single-column input flows that read worse stretched full-width, so they keep their existing narrower max-widths.
 - Homepage's feature grid also picked up a 4-column layout at the `lg` breakpoint (was capped at 2 columns even on wide screens).
+
+## 21. Specific Signup CTAs
+
+- Replaced generic "Start a train — it's free" / "Create your first train" buttons with role-specific copy: **Build My First Train** (organizer, `/register?role=organizer`) and **Join a Raid Train** (seller, `/register?role=seller`) — used in both the homepage hero and the closing CTA band.
+- The register page now reads a `role` query param to preselect the seller/organizer radio button, so both buttons land on the right side of the form already selected.
+- The register form's submit button is now role-aware: **Create My Free Seller Account** or **Create My Organizer Account**, updating live as the user toggles the radio buttons (not just on page load from the query param).

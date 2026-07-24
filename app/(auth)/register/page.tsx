@@ -4,7 +4,13 @@ import { GoogleButton } from "@/components/auth/google-button";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-export default function RegisterPage() {
+export default function RegisterPage({
+  searchParams,
+}: {
+  searchParams: { role?: string };
+}) {
+  const defaultRole = searchParams.role === "organizer" ? "organizer" : searchParams.role === "seller" ? "seller" : undefined;
+
   return (
     <AuthShell>
       <CardHeader>
@@ -22,7 +28,7 @@ export default function RegisterPage() {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      <RegisterForm />
+      <RegisterForm defaultRole={defaultRole} />
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href="/login" className="font-medium text-foreground hover:underline">

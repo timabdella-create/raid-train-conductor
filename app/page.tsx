@@ -70,16 +70,16 @@ export default function HomePage() {
             style={{ animationDelay: "240ms" }}
           >
             <Link
-              href="/register"
+              href="/register?role=organizer"
               className="glow-accent rounded-md bg-accent px-6 py-3.5 font-display text-base font-semibold text-accent-foreground transition-transform hover:scale-[1.03]"
             >
-              Start a train — it&apos;s free
+              Build My First Train
             </Link>
             <Link
-              href="/login"
+              href="/register?role=seller"
               className="rounded-md border border-white/20 bg-white/5 px-6 py-3.5 font-display text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
             >
-              Log in
+              Join a Raid Train
             </Link>
           </div>
         </div>
@@ -174,11 +174,17 @@ export default function HomePage() {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
-            href="/register"
+            href="/register?role=organizer"
             className="rounded-md bg-white px-6 py-3.5 font-display text-base font-semibold transition-transform hover:scale-[1.03]"
             style={{ color: "hsl(var(--hero-ink))" }}
           >
-            Create your first train
+            Build My First Train
+          </Link>
+          <Link
+            href="/register?role=seller"
+            className="rounded-md border border-white/30 px-6 py-3.5 font-display text-base font-semibold text-white transition-colors hover:bg-white/10"
+          >
+            Join a Raid Train
           </Link>
         </div>
       </section>

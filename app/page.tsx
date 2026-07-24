@@ -73,7 +73,7 @@ export default function HomePage() {
               href="/register?role=organizer"
               className="glow-accent rounded-md bg-accent px-6 py-3.5 font-display text-base font-semibold text-accent-foreground transition-transform hover:scale-[1.03]"
             >
-              Build My First Train
+              Organize a Raid Train
             </Link>
             <Link
               href="/register?role=seller"
@@ -178,7 +178,7 @@ export default function HomePage() {
             className="rounded-md bg-white px-6 py-3.5 font-display text-base font-semibold transition-transform hover:scale-[1.03]"
             style={{ color: "hsl(var(--hero-ink))" }}
           >
-            Build My First Train
+            Organize a Raid Train
           </Link>
           <Link
             href="/register?role=seller"

@@ -6,26 +6,26 @@
   :root {
     color-scheme: dark;
 
-    --background: 240 6% 8%;
-    --foreground: 0 0% 95%;
-    --card: 240 5% 13%;
-    --card-foreground: 0 0% 95%;
-    --primary: 38 88% 58%;
-    --primary-foreground: 240 15% 9%;
-    --muted: 240 5% 16%;
-    --muted-foreground: 220 8% 68%;
-    --destructive: 0 75% 58%;
+    --background: 240 8% 15%;
+    --foreground: 0 0% 97%;
+    --card: 240 7% 20%;
+    --card-foreground: 0 0% 97%;
+    --primary: 38 92% 62%;
+    --primary-foreground: 240 20% 10%;
+    --muted: 240 6% 24%;
+    --muted-foreground: 220 10% 72%;
+    --destructive: 0 78% 62%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 24%;
+    --border: 240 7% 32%;
 
-    --accent: 38 92% 62%;
-    --accent-foreground: 240 15% 9%;
-    --electric: 189 75% 50%;
-    --electric-foreground: 240 15% 9%;
-    --hero-from: 38 80% 40%;
-    --hero-via: 20 55% 32%;
-    --hero-to: 189 70% 32%;
-    --hero-ink: 240 8% 6%;
+    --accent: 38 95% 64%;
+    --accent-foreground: 240 20% 10%;
+    --electric: 189 80% 55%;
+    --electric-foreground: 240 20% 10%;
+    --hero-from: 38 82% 48%;
+    --hero-via: 24 60% 40%;
+    --hero-to: 189 72% 40%;
+    --hero-ink: 240 10% 12%;
   }
 
   * {

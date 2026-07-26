@@ -394,3 +394,8 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - Replaced generic "Start a train — it's free" / "Create your first train" buttons with role-specific copy: **Build My First Train** (organizer, `/register?role=organizer`) and **Join a Raid Train** (seller, `/register?role=seller`) — used in both the homepage hero and the closing CTA band.
 - The register page now reads a `role` query param to preselect the seller/organizer radio button, so both buttons land on the right side of the form already selected.
 - The register form's submit button is now role-aware: **Create My Free Seller Account** or **Create My Organizer Account**, updating live as the user toggles the radio buttons (not just on page load from the query param).
+
+## 22. Lighter Dark Theme
+
+- Lightened the dark theme's CSS variable values in `app/globals.css` — background lifted from near-black (`8% lightness`) to a medium charcoal (`15%`), cards/muted surfaces lightened proportionally, and gold/teal accents made slightly more saturated and vivid. Same overall dark aesthetic and color identity (gold + teal, from §17), just noticeably less heavy — a "dimmed" dark theme (think GitHub's dark-dimmed mode) rather than near-OLED-black.
+- No component markup changed — every color still routes through the same CSS variables, so this was a one-file change.

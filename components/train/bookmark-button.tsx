@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bookmark } from "lucide-react";
-import { isBookmarked, toggleBookmark } from "@/lib/bookmarks/local-bookmarks";
+import { isBookmarked, toggleBookmark, onBookmarksChanged } from "@/lib/bookmarks/local-bookmarks";
 import { cn } from "@/lib/utils";
 
 export function BookmarkButton({
@@ -24,6 +24,9 @@ export function BookmarkButton({
   useEffect(() => {
     setBookmarked(isBookmarked(sellerId));
     setMounted(true);
+    // Stay in sync if bookmarks change elsewhere on the page — e.g. the
+    // "Bookmark all" button, or another BookmarkButton for the same seller.
+    return onBookmarksChanged(() => setBookmarked(isBookmarked(sellerId)));
   }, [sellerId]);
 
   function handleClick() {

@@ -7,6 +7,7 @@ import { SlotStatusBadge } from "@/components/train/status-badge";
 import { CountdownTimer } from "@/components/train/countdown-timer";
 import { ShareButtons } from "@/components/train/share-buttons";
 import { BookmarkButton } from "@/components/train/bookmark-button";
+import { BookmarkAllButton } from "@/components/train/bookmark-all-button";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import { loadPublicTrain } from "@/lib/trains/load-public-train";
 import { createClient } from "@/lib/supabase/server";
@@ -94,11 +95,22 @@ export default async function PublicTrainPage({
       </div>
 
       <div className="mx-auto max-w-5xl px-4">
-        <div className="mt-4 flex items-center justify-end gap-4">
-          <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground">
-            Saved shows
-          </Link>
-          <ShareButtons url={publicUrl} title={train.name} />
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <BookmarkAllButton
+            sellers={[...sellersById.entries()].map(([sellerId, seller]) => ({
+              sellerId,
+              whatnotUsername: seller.whatnot_username,
+              whatnotProfileUrl: seller.whatnot_profile_url,
+            }))}
+            trainSlug={train.slug}
+            trainName={train.name}
+          />
+          <div className="ml-auto flex items-center gap-4">
+            <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground">
+              Saved shows
+            </Link>
+            <ShareButtons url={publicUrl} title={train.name} />
+          </div>
         </div>
 
         {train.description && <p className="mt-2">{train.description}</p>}

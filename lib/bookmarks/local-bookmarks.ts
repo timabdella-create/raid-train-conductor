@@ -12,6 +12,20 @@ export type BookmarkedSeller = {
 };
 
 const STORAGE_KEY = "rtc_bookmarked_sellers";
+const CHANGE_EVENT = "rtc-bookmarks-changed";
+
+function writeBookmarks(next: BookmarkedSeller[]): void {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/** Subscribe to bookmark changes made anywhere on the page (e.g. another
+ * bookmark button, or "Bookmark all"). Returns an unsubscribe function. */
+export function onBookmarksChanged(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(CHANGE_EVENT, callback);
+  return () => window.removeEventListener(CHANGE_EVENT, callback);
+}
 
 export function getBookmarks(): BookmarkedSeller[] {
   if (typeof window === "undefined") return [];
@@ -37,12 +51,23 @@ export function toggleBookmark(entry: Omit<BookmarkedSeller, "savedAt">): boolea
   const next = exists
     ? current.filter((b) => b.sellerId !== entry.sellerId)
     : [...current, { ...entry, savedAt: new Date().toISOString() }];
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  writeBookmarks(next);
   return !exists;
 }
 
 export function removeBookmark(sellerId: string): void {
   if (typeof window === "undefined") return;
-  const next = getBookmarks().filter((b) => b.sellerId !== sellerId);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  writeBookmarks(getBookmarks().filter((b) => b.sellerId !== sellerId));
+}
+
+/** Adds every entry not already bookmarked. Returns how many were newly added. */
+export function addBookmarks(entries: Omit<BookmarkedSeller, "savedAt">[]): number {
+  if (typeof window === "undefined") return 0;
+  const current = getBookmarks();
+  const existingIds = new Set(current.map((b) => b.sellerId));
+  const savedAt = new Date().toISOString();
+  const toAdd = entries.filter((e) => !existingIds.has(e.sellerId));
+  if (toAdd.length === 0) return 0;
+  writeBookmarks([...current, ...toAdd.map((e) => ({ ...e, savedAt }))]);
+  return toAdd.length;
 }

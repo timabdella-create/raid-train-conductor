@@ -399,3 +399,10 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 
 - Lightened the dark theme's CSS variable values in `app/globals.css` — background lifted from near-black (`8% lightness`) to a medium charcoal (`15%`), cards/muted surfaces lightened proportionally, and gold/teal accents made slightly more saturated and vivid. Same overall dark aesthetic and color identity (gold + teal, from §17), just noticeably less heavy — a "dimmed" dark theme (think GitHub's dark-dimmed mode) rather than near-OLED-black.
 - No component markup changed — every color still routes through the same CSS variables, so this was a one-file change.
+
+## 23. Bookmark a Seller's Show
+
+- Public train pages now show each filled slot's seller (`@whatnot_username`, linked to their Whatnot profile) in a new "Seller" column, next to a bookmark icon. **`lib/bookmarks/local-bookmarks.ts`** stores bookmarks in `localStorage` — no account or login required, matching "one click" — so this works for anonymous visitors browsing a train page, not just registered users.
+- Seller identity uses `seller_profiles.whatnot_username`/`whatnot_profile_url` rather than the base `profiles.display_name`, because RLS only makes `seller_profiles` (and `organizer_profiles`) publicly readable for people on a publicly visible train — the base `profiles` table stays private to its owner. Confirmed this while building rather than assuming, since it would've silently returned nothing for anonymous visitors otherwise.
+- **`/bookmarks`** (new, public route): lists everything saved on this device with a link back to the seller's Whatnot profile and the train it was saved from, plus a Remove button. Linked from the public train page (next to Share) and from the dashboard header ("Saved shows").
+- Known limitation, by design: bookmarks live in browser `localStorage`, so they don't sync across devices or survive clearing browsing data. Moving to account-backed bookmarks later would need a new table plus requiring sellers/organizers (or a new "buyer" role) to log in to save a show — a bigger change than what was asked for here.

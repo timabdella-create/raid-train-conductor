@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { SlotStatusBadge } from "@/components/train/status-badge";
 import { CountdownTimer } from "@/components/train/countdown-timer";
 import { ShareButtons } from "@/components/train/share-buttons";
+import { BookmarkButton } from "@/components/train/bookmark-button";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import { loadPublicTrain } from "@/lib/trains/load-public-train";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
 type RaidTrainRow = Database["public"]["Tables"]["raid_trains"]["Row"];
 type TrainSlotRow = Database["public"]["Tables"]["train_slots"]["Row"];
+type SellerInfo = { whatnot_username: string; whatnot_profile_url: string };
 
 function findLiveAndNextSlot(slots: TrainSlotRow[]) {
   const now = Date.now();
@@ -37,6 +40,23 @@ export default async function PublicTrainPage({
   const openCount = slots.filter((s) => s.status === "open").length;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const publicUrl = `${siteUrl}/train/${train.slug}`;
+
+  // Seller identity for filled slots. whatnot_username/whatnot_profile_url
+  // are the only seller fields readable by anonymous visitors (RLS allows
+  // public select on seller_profiles for sellers on a publicly visible
+  // train; the base `profiles` table — display_name — is not public).
+  const sellerIds = [...new Set(slots.map((s) => s.seller_id).filter((id): id is string => !!id))];
+  const sellersById = new Map<string, SellerInfo>();
+  if (sellerIds.length > 0) {
+    const supabase = createClient();
+    const { data: sellerRows } = await supabase
+      .from("seller_profiles")
+      .select("id, whatnot_username, whatnot_profile_url")
+      .in("id", sellerIds);
+    for (const row of sellerRows ?? []) {
+      sellersById.set(row.id, { whatnot_username: row.whatnot_username, whatnot_profile_url: row.whatnot_profile_url });
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background pb-16">
@@ -74,7 +94,10 @@ export default async function PublicTrainPage({
       </div>
 
       <div className="mx-auto max-w-5xl px-4">
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex items-center justify-end gap-4">
+          <Link href="/bookmarks" className="text-sm text-muted-foreground hover:text-foreground">
+            Saved shows
+          </Link>
           <ShareButtons url={publicUrl} title={train.name} />
         </div>
 
@@ -151,27 +174,54 @@ export default async function PublicTrainPage({
               <tr>
                 <th className="px-4 py-2">#</th>
                 <th className="px-4 py-2">Time</th>
+                <th className="px-4 py-2">Seller</th>
                 <th className="px-4 py-2">Status</th>
               </tr>
             </thead>
             <tbody>
-              {slots.map((slot) => (
-                <tr
-                  key={slot.id}
-                  className={`border-t border-border transition-colors hover:bg-muted/50 ${
-                    slot.status === "live" ? "bg-destructive/5" : ""
-                  }`}
-                >
-                  <td className="px-4 py-2 text-muted-foreground">{slot.position + 1}</td>
-                  <td className="px-4 py-2">
-                    {formatSlotTime(slot.start_datetime, train.timezone)} –{" "}
-                    {formatSlotTime(slot.end_datetime, train.timezone)}
-                  </td>
-                  <td className="px-4 py-2">
-                    <SlotStatusBadge status={slot.status} />
-                  </td>
-                </tr>
-              ))}
+              {slots.map((slot) => {
+                const seller = slot.seller_id ? sellersById.get(slot.seller_id) : undefined;
+                return (
+                  <tr
+                    key={slot.id}
+                    className={`border-t border-border transition-colors hover:bg-muted/50 ${
+                      slot.status === "live" ? "bg-destructive/5" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-2 text-muted-foreground">{slot.position + 1}</td>
+                    <td className="px-4 py-2">
+                      {formatSlotTime(slot.start_datetime, train.timezone)} –{" "}
+                      {formatSlotTime(slot.end_datetime, train.timezone)}
+                    </td>
+                    <td className="px-4 py-2">
+                      {seller ? (
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={seller.whatnot_profile_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium hover:underline"
+                          >
+                            @{seller.whatnot_username}
+                          </a>
+                          <BookmarkButton
+                            sellerId={slot.seller_id as string}
+                            whatnotUsername={seller.whatnot_username}
+                            whatnotProfileUrl={seller.whatnot_profile_url}
+                            trainSlug={train.slug}
+                            trainName={train.name}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <SlotStatusBadge status={slot.status} />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

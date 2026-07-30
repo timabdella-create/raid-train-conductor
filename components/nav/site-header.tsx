@@ -28,6 +28,9 @@ export async function SiteHeader() {
           🚂 Raid Train Conductor
         </Link>
         <nav className="flex items-center gap-4 text-sm">
+          <Link href="/bookmarks" className="text-muted-foreground hover:text-foreground">
+            Saved shows
+          </Link>
           {user ? (
             <>
               <RoleSwitcher

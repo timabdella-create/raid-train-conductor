@@ -411,3 +411,10 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 
 - Added a "Bookmark all" button at the top of each public train page, next to Share/Saved shows. One click saves every seller currently signed up for that train to `localStorage` at once (via a new `addBookmarks()` helper), showing a brief "Saved N shows" confirmation. Skips anyone already bookmarked and shows "Already saved" if everyone on the train was saved already. Renders nothing if no sellers have signed up yet.
 - Individual bookmark icons and "Bookmark all" now stay in sync with each other on the same page load: `local-bookmarks.ts` dispatches a `rtc-bookmarks-changed` window event on every write, and each bookmark icon listens for it — so clicking "Bookmark all" immediately fills in every icon in the schedule table, not just on next page load.
+
+## 25. Trains Hosted / Trains Sold Counts
+
+- Public train pages now show "Organized by {name} · N trains hosted" near the top, and each seller in the schedule table shows "(N trains)" next to their `@whatnot_username` — both counts are completed-trains totals, not just sign-ups.
+- **`supabase/migrations/0011_participation_counts.sql`** (new, applied): two `SECURITY DEFINER` RPCs, `get_organizer_completed_count(p_organizer_id)` and `get_seller_completed_counts(p_seller_ids[])` (batched — one round trip for every seller on a train instead of one call per seller), both counting rows where the train/participation status is `completed`. Granted to `anon, authenticated` since these counts are meant to be public, same pattern as the leaderboard RPCs.
+- The organizer's name is sourced from `organizer_profiles.organizer_name`, which — like `seller_profiles` — has a public-read RLS exception for organizers/sellers tied to a publicly visible train. This also fixes a gap where the organizer's name wasn't shown anywhere on the public train page before.
+- The organizer's Applications review page (`/dashboard/organizer/trains/[trainId]/applications`) now shows each applicant's completed-trains count too, using the same batched RPC — useful context when deciding who to approve for an open slot.

@@ -15,7 +15,7 @@ import type { Database } from "@/types/database.types";
 
 type RaidTrainRow = Database["public"]["Tables"]["raid_trains"]["Row"];
 type TrainSlotRow = Database["public"]["Tables"]["train_slots"]["Row"];
-type SellerInfo = { whatnot_username: string; whatnot_profile_url: string };
+type SellerInfo = { whatnot_username: string; whatnot_profile_url: string; completedTrains: number };
 
 function findLiveAndNextSlot(slots: TrainSlotRow[]) {
   const now = Date.now();
@@ -48,14 +48,26 @@ export default async function PublicTrainPage({
   // train; the base `profiles` table — display_name — is not public).
   const sellerIds = [...new Set(slots.map((s) => s.seller_id).filter((id): id is string => !!id))];
   const sellersById = new Map<string, SellerInfo>();
+  const supabase = createClient();
+
+  const [{ data: organizerProfile }, organizerCountResult] = await Promise.all([
+    supabase.from("organizer_profiles").select("organizer_name").eq("id", train.organizer_id).maybeSingle(),
+    supabase.rpc("get_organizer_completed_count", { p_organizer_id: train.organizer_id }),
+  ]);
+  const organizerHostedCount = organizerCountResult.data ?? 0;
+
   if (sellerIds.length > 0) {
-    const supabase = createClient();
-    const { data: sellerRows } = await supabase
-      .from("seller_profiles")
-      .select("id, whatnot_username, whatnot_profile_url")
-      .in("id", sellerIds);
+    const [{ data: sellerRows }, { data: sellerCounts }] = await Promise.all([
+      supabase.from("seller_profiles").select("id, whatnot_username, whatnot_profile_url").in("id", sellerIds),
+      supabase.rpc("get_seller_completed_counts", { p_seller_ids: sellerIds }),
+    ]);
+    const countBySellerId = new Map((sellerCounts ?? []).map((c) => [c.seller_id, c.completed_trains]));
     for (const row of sellerRows ?? []) {
-      sellersById.set(row.id, { whatnot_username: row.whatnot_username, whatnot_profile_url: row.whatnot_profile_url });
+      sellersById.set(row.id, {
+        whatnot_username: row.whatnot_username,
+        whatnot_profile_url: row.whatnot_profile_url,
+        completedTrains: countBySellerId.get(row.id) ?? 0,
+      });
     }
   }
 
@@ -95,7 +107,15 @@ export default async function PublicTrainPage({
       </div>
 
       <div className="mx-auto max-w-5xl px-4">
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="mt-4 text-sm text-muted-foreground">
+          Organized by{" "}
+          <span className="font-medium text-foreground">
+            {organizerProfile?.organizer_name ?? "Unknown organizer"}
+          </span>{" "}
+          · {organizerHostedCount} {organizerHostedCount === 1 ? "train" : "trains"} hosted
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <BookmarkAllButton
             sellers={[...sellersById.entries()].map(([sellerId, seller]) => ({
               sellerId,
@@ -216,6 +236,9 @@ export default async function PublicTrainPage({
                           >
                             @{seller.whatnot_username}
                           </a>
+                          <span className="text-xs text-muted-foreground">
+                            ({seller.completedTrains} {seller.completedTrains === 1 ? "train" : "trains"})
+                          </span>
                           <BookmarkButton
                             sellerId={slot.seller_id as string}
                             whatnotUsername={seller.whatnot_username}

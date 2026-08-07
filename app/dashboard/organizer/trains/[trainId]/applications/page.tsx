@@ -58,10 +58,21 @@ export default async function ApplicationsPage({ params }: { params: { trainId: 
       : { data: [] as { user_id: string; display_name: string }[] };
 
   const displayNameByUserId = new Map((displayProfiles ?? []).map((p) => [p.user_id, p.display_name]));
+
+  const { data: sellerCounts } =
+    sellerIds.length > 0
+      ? await supabase.rpc("get_seller_completed_counts", { p_seller_ids: sellerIds })
+      : { data: [] as { seller_id: string; completed_trains: number }[] };
+  const completedCountBySellerId = new Map((sellerCounts ?? []).map((c) => [c.seller_id, c.completed_trains]));
+
   const sellerById = new Map(
     (sellerProfiles ?? []).map((s) => [
       s.id,
-      { ...s, displayName: displayNameByUserId.get(s.user_id) ?? "Seller" },
+      {
+        ...s,
+        displayName: displayNameByUserId.get(s.user_id) ?? "Seller",
+        completedTrains: completedCountBySellerId.get(s.id) ?? 0,
+      },
     ])
   );
 
@@ -111,7 +122,12 @@ export default async function ApplicationsPage({ params }: { params: { trainId: 
                     <div>
                       <p className="font-medium">
                         {seller?.displayName ?? "Seller"}{" "}
-                        <span className="font-normal text-muted-foreground">@{seller?.whatnot_username}</span>
+                        <span className="font-normal text-muted-foreground">@{seller?.whatnot_username}</span>{" "}
+                        {seller && (
+                          <span className="text-xs font-normal text-muted-foreground">
+                            ({seller.completedTrains} {seller.completedTrains === 1 ? "train" : "trains"})
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {seller?.seller_category ?? "—"}

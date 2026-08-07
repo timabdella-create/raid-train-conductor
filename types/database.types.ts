@@ -310,6 +310,11 @@ export interface Database {
           event_date: string; start_time: string; timezone: string; organizer_name: string;
         }[]
       >;
+      get_organizer_completed_count: Fn<{ p_organizer_id: string }, number>;
+      get_seller_completed_counts: Fn<
+        { p_seller_ids: string[] },
+        { seller_id: string; completed_trains: number }[]
+      >;
     };
   };
 }

@@ -418,3 +418,10 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **`supabase/migrations/0011_participation_counts.sql`** (new, applied): two `SECURITY DEFINER` RPCs, `get_organizer_completed_count(p_organizer_id)` and `get_seller_completed_counts(p_seller_ids[])` (batched — one round trip for every seller on a train instead of one call per seller), both counting rows where the train/participation status is `completed`. Granted to `anon, authenticated` since these counts are meant to be public, same pattern as the leaderboard RPCs.
 - The organizer's name is sourced from `organizer_profiles.organizer_name`, which — like `seller_profiles` — has a public-read RLS exception for organizers/sellers tied to a publicly visible train. This also fixes a gap where the organizer's name wasn't shown anywhere on the public train page before.
 - The organizer's Applications review page (`/dashboard/organizer/trains/[trainId]/applications`) now shows each applicant's completed-trains count too, using the same batched RPC — useful context when deciding who to approve for an open slot.
+
+## 26. Brand Color Palette
+
+- Swapped the theme's colors in `app/globals.css` for the site's actual brand palette: **Purple** `#8A20E8` (primary), **Fuchsia** `#F23BC2` (accent), **Turquoise** `#27CFC8`/**Deep Teal** `#079C9C` (electric + hero gradient), on **Black** `#09090B` / **White** `#F7F7F7`. Same one-file, CSS-variable-only change as the earlier theme edits (§17, §22) — no component markup touched.
+- The hero gradient (homepage banner, train page fallback banner) now runs purple → fuchsia → deep teal instead of gold → orange → cyan.
+- Left the functional status colors alone (green/amber/red/sky in badges and success/warning messages) — those signal state (approved/pending/error), not brand, so mixing in fuchsia/purple there would hurt readability rather than help it.
+- Added `--soft-pink` (`#E982B5`) as a defined-but-unused CSS variable for future accents.

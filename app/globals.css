@@ -6,26 +6,30 @@
   :root {
     color-scheme: dark;
 
-    --background: 240 8% 15%;
+    /* Brand palette: Fuchsia #F23BC2, Purple #8A20E8, Turquoise #27CFC8,
+       Deep Teal #079C9C, Black #09090B, White #F7F7F7, Soft Pink #E982B5 */
+    --background: 240 10% 4%;
     --foreground: 0 0% 97%;
-    --card: 240 7% 20%;
+    --card: 240 8% 9%;
     --card-foreground: 0 0% 97%;
-    --primary: 38 92% 62%;
-    --primary-foreground: 240 20% 10%;
-    --muted: 240 6% 24%;
-    --muted-foreground: 220 10% 72%;
+    --primary: 272 81% 52%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 240 6% 14%;
+    --muted-foreground: 220 8% 68%;
     --destructive: 0 78% 62%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 7% 32%;
+    --border: 240 7% 20%;
 
-    --accent: 38 95% 64%;
-    --accent-foreground: 240 20% 10%;
-    --electric: 189 80% 55%;
-    --electric-foreground: 240 20% 10%;
-    --hero-from: 38 82% 48%;
-    --hero-via: 24 60% 40%;
-    --hero-to: 189 72% 40%;
-    --hero-ink: 240 10% 12%;
+    --accent: 316 88% 59%;
+    --accent-foreground: 240 20% 8%;
+    --electric: 178 68% 48%;
+    --electric-foreground: 240 20% 8%;
+    --hero-from: 272 70% 42%;
+    --hero-via: 316 75% 48%;
+    --hero-to: 180 91% 32%;
+    --hero-ink: 240 10% 6%;
+
+    --soft-pink: 330 70% 71%;
   }
 
   * {

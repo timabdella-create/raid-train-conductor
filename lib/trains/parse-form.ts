@@ -9,6 +9,7 @@ export function parseTrainFormData(formData: FormData) {
     category: formData.get("category"),
     imageUrl: formData.get("imageUrl"),
     imagePosition: formData.get("imagePosition") || "center",
+    imageFit: formData.get("imageFit") || "cover",
     sellerThumbnailUrl: formData.get("sellerThumbnailUrl"),
     eventDate: formData.get("eventDate"),
     startTime: formData.get("startTime"),

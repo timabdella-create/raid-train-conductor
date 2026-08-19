@@ -27,6 +27,12 @@ export const CHECK_IN_PRESETS = [
 // keep it visible instead of getting trimmed by the crop.
 export const IMAGE_POSITIONS = ["top", "center", "bottom"] as const;
 
+// The banner's shape changes a lot by screen size (close to square on
+// mobile, panoramic on desktop), so a single crop can lose content on one
+// screen size or the other for images with detail running edge-to-edge.
+// "contain" opts out of cropping entirely — the whole image always shows.
+export const IMAGE_FITS = ["cover", "contain"] as const;
+
 // ---------------------------------------------------------------------------
 // Step 1 — Basic details
 // ---------------------------------------------------------------------------
@@ -37,6 +43,7 @@ export const basicDetailsSchema = z.object({
   category: z.enum(TRAIN_CATEGORIES, { required_error: "Choose a category." }),
   imageUrl: z.string().trim().url().optional().or(z.literal("")),
   imagePosition: z.enum(IMAGE_POSITIONS).default("center"),
+  imageFit: z.enum(IMAGE_FITS).default("cover"),
   sellerThumbnailUrl: z.string().trim().url().optional().or(z.literal("")),
 });
 export type BasicDetailsInput = z.infer<typeof basicDetailsSchema>;

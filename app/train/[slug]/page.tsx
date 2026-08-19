@@ -42,6 +42,8 @@ export default async function PublicTrainPage({
   const openCount = slots.filter((s) => s.status === "open").length;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const publicUrl = `${siteUrl}/train/${train.slug}`;
+  const positionClass =
+    train.image_position === "top" ? "object-top" : train.image_position === "bottom" ? "object-bottom" : "object-center";
 
   // Seller identity for filled slots. whatnot_username/whatnot_profile_url
   // are the only seller fields readable by anonymous visitors (RLS allows
@@ -76,22 +78,35 @@ export default async function PublicTrainPage({
     <main className="min-h-screen bg-background pb-16">
       <div className="relative mx-auto h-72 w-full max-w-[1600px] overflow-hidden sm:h-96 lg:h-[30rem]">
         {train.image_url ? (
-          <>
-            <Image
-              src={train.image_url}
-              alt={train.name}
-              fill
-              className={`object-cover ${
-                train.image_position === "top"
-                  ? "object-top"
-                  : train.image_position === "bottom"
-                    ? "object-bottom"
-                    : "object-center"
-              }`}
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          </>
+          train.image_fit === "contain" ? (
+            <>
+              {/* Blurred, scaled-up copy fills the strip behind the sharp image so
+                  "contain" never shows raw empty bars — same idea as Spotify/YouTube
+                  letterboxing. */}
+              <Image
+                src={train.image_url}
+                alt=""
+                aria-hidden
+                fill
+                className="scale-125 object-cover object-center blur-2xl"
+                priority
+              />
+              <div className="absolute inset-0 bg-black/50" />
+              <Image
+                src={train.image_url}
+                alt={train.name}
+                fill
+                className={`object-contain ${positionClass}`}
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+            </>
+          ) : (
+            <>
+              <Image src={train.image_url} alt={train.name} fill className={`object-cover ${positionClass}`} priority />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            </>
+          )
         ) : (
           <div className="absolute inset-0 bg-hero-mesh" />
         )}

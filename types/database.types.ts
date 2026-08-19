@@ -94,7 +94,7 @@ export interface Database {
         {
           id: string; organizer_id: string; name: string; slug: string; description: string | null;
           theme: string | null; category: string | null; image_url: string | null;
-          image_position: string;
+          image_position: string; image_fit: string;
           event_date: string; start_time: string; end_time: string; timezone: string;
           slot_duration_minutes: number; break_minutes: number; signup_mode: TrainSignupMode;
           visibility: TrainVisibility; status: TrainStatus; rules: string | null;
@@ -107,7 +107,7 @@ export interface Database {
         },
         Partial<{
           description: string | null; theme: string | null; category: string | null;
-          image_url: string | null; image_position: string; timezone: string; break_minutes: number;
+          image_url: string | null; image_position: string; image_fit: string; timezone: string; break_minutes: number;
           signup_mode: TrainSignupMode; visibility: TrainVisibility; status: TrainStatus;
           rules: string | null; cancellation_policy: string | null; check_in_minutes_before: number;
           requires_whatnot_profile: boolean; requires_show_link: boolean;
@@ -120,7 +120,7 @@ export interface Database {
         },
         Partial<{
           name: string; slug: string; description: string | null; theme: string | null;
-          category: string | null; image_url: string | null; image_position: string; event_date: string;
+          category: string | null; image_url: string | null; image_position: string; image_fit: string; event_date: string;
           start_time: string; end_time: string; timezone: string; slot_duration_minutes: number;
           break_minutes: number; signup_mode: TrainSignupMode; visibility: TrainVisibility;
           status: TrainStatus; rules: string | null; cancellation_policy: string | null;

@@ -14,7 +14,7 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
   const { data: train } = await supabase
     .from("raid_trains")
     .select(
-      "id, organizer_id, name, description, theme, category, image_url, image_position, seller_thumbnail_url, event_date, start_time, end_time, timezone, slot_duration_minutes, break_minutes, signup_mode, visibility, status, rules, cancellation_policy, check_in_minutes_before, requires_whatnot_profile, requires_show_link, sales_level_requirement, additional_questions"
+      "id, organizer_id, name, description, theme, category, image_url, image_position, image_fit, seller_thumbnail_url, event_date, start_time, end_time, timezone, slot_duration_minutes, break_minutes, signup_mode, visibility, status, rules, cancellation_policy, check_in_minutes_before, requires_whatnot_profile, requires_show_link, sales_level_requirement, additional_questions"
     )
     .eq("id", params.trainId)
     .maybeSingle();
@@ -38,6 +38,7 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
     category: train.category ?? "",
     imageUrl: train.image_url ?? "",
     imagePosition: train.image_position ?? "center",
+    imageFit: train.image_fit ?? "cover",
     sellerThumbnailUrl: train.seller_thumbnail_url ?? "",
     eventDate: train.event_date,
     startTime: train.start_time.slice(0, 5),

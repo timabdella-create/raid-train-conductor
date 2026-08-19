@@ -8,6 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploadField } from "@/components/organizer/image-upload-field";
 import type { WizardData } from "../train-wizard";
 
+const IMAGE_FIT_OPTIONS = [
+  {
+    value: "cover",
+    label: "Fill the banner",
+    description: "Crops the image to fill the strip edge-to-edge. Best for photos with breathing room around the edges.",
+  },
+  {
+    value: "contain",
+    label: "Show the whole image",
+    description: "Never crops — fits the full image in the banner, with a soft blurred fill behind it. Best for graphics or posters with text near the edges.",
+  },
+] as const;
+
 interface Props {
   data: WizardData;
   update: (patch: Partial<WizardData>) => void;
@@ -83,29 +96,65 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
       <input type="hidden" name="imageUrl" value={data.imageUrl} />
 
       {data.imageUrl && (
-        <div>
-          <Label htmlFor="imagePosition">Banner focal point</Label>
-          <p className="mb-2 text-xs text-muted-foreground">
-            If the top or bottom of your image is getting cropped off, nudge this to match where the
-            important part is.
-          </p>
-          <div className="flex gap-2">
-            {IMAGE_POSITIONS.map((pos) => (
-              <label
-                key={pos}
-                className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm capitalize has-[:checked]:border-primary has-[:checked]:bg-primary/5"
-              >
-                <input
-                  type="radio"
-                  name="imagePosition"
-                  value={pos}
-                  checked={data.imagePosition === pos}
-                  onChange={() => update({ imagePosition: pos })}
-                  className="accent-primary"
-                />
-                {pos}
-              </label>
-            ))}
+        <div className="space-y-4 rounded-md border border-border p-3">
+          <div>
+            <Label htmlFor="imageFit">How should the banner be shown?</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              The banner's shape changes a lot by screen size — close to square on mobile, wide on
+              desktop — so a graphic with text or detail running edge-to-edge (like a poster) can lose
+              content on one or the other no matter how it's cropped. "Show the whole image" fixes that
+              by never cropping.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {IMAGE_FIT_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex flex-1 cursor-pointer items-start gap-2 rounded-md border border-border p-3 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                >
+                  <input
+                    type="radio"
+                    name="imageFit"
+                    value={opt.value}
+                    checked={data.imageFit === opt.value}
+                    onChange={() => update({ imageFit: opt.value })}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <span>
+                    <span className="block font-medium">{opt.label}</span>
+                    <span className="block text-xs text-muted-foreground">{opt.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="imagePosition">
+              {data.imageFit === "contain" ? "Image alignment" : "Banner focal point"}
+            </Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {data.imageFit === "contain"
+                ? "Where to anchor the image within the banner if there's extra space."
+                : "If the top or bottom of your image is getting cropped off, nudge this to match where the important part is."}
+            </p>
+            <div className="flex gap-2">
+              {IMAGE_POSITIONS.map((pos) => (
+                <label
+                  key={pos}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm capitalize has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                >
+                  <input
+                    type="radio"
+                    name="imagePosition"
+                    value={pos}
+                    checked={data.imagePosition === pos}
+                    onChange={() => update({ imagePosition: pos })}
+                    className="accent-primary"
+                  />
+                  {pos}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       )}

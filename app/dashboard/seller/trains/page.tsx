@@ -19,7 +19,7 @@ export default async function BrowseTrainsPage({
 
   let query = supabase
     .from("raid_trains")
-    .select("id, name, slug, category, theme, event_date, start_time, timezone, signup_mode, image_url")
+    .select("id, name, slug, category, theme, event_date, start_time, timezone, signup_mode, image_url, image_position")
     .eq("status", "published")
     .in("visibility", ["public", "unlisted"])
     .gte("event_date", new Date().toISOString().slice(0, 10))
@@ -85,7 +85,13 @@ export default async function BrowseTrainsPage({
                   <img
                     src={train.image_url}
                     alt={train.name}
-                    className="mb-3 h-32 w-full rounded-md object-cover"
+                    className={`mb-3 h-32 w-full rounded-md object-cover ${
+                      train.image_position === "top"
+                        ? "object-top"
+                        : train.image_position === "bottom"
+                          ? "object-bottom"
+                          : "object-center"
+                    }`}
                   />
                 )}
                 <div className="flex items-start justify-between gap-2">

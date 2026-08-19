@@ -21,6 +21,12 @@ export const CHECK_IN_PRESETS = [
   { label: "30 minutes before my slot", minutes: 30 },
 ] as const;
 
+// The banner renders as a short, very wide strip (see app/train/[slug]/page.tsx),
+// so it crops most images horizontally. This controls the vertical anchor —
+// lets an organizer whose subject sits near the top or bottom of their image
+// keep it visible instead of getting trimmed by the crop.
+export const IMAGE_POSITIONS = ["top", "center", "bottom"] as const;
+
 // ---------------------------------------------------------------------------
 // Step 1 — Basic details
 // ---------------------------------------------------------------------------
@@ -30,6 +36,7 @@ export const basicDetailsSchema = z.object({
   theme: z.string().trim().max(100).optional().or(z.literal("")),
   category: z.enum(TRAIN_CATEGORIES, { required_error: "Choose a category." }),
   imageUrl: z.string().trim().url().optional().or(z.literal("")),
+  imagePosition: z.enum(IMAGE_POSITIONS).default("center"),
   sellerThumbnailUrl: z.string().trim().url().optional().or(z.literal("")),
 });
 export type BasicDetailsInput = z.infer<typeof basicDetailsSchema>;

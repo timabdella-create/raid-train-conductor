@@ -1,6 +1,6 @@
 "use client";
 
-import { TRAIN_CATEGORIES } from "@/lib/validations/train";
+import { TRAIN_CATEGORIES, IMAGE_POSITIONS } from "@/lib/validations/train";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -76,11 +76,39 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
 
       <ImageUploadField
         label="Train banner (optional)"
-        helpText="Sits behind the train name at the top of the page. Use a landscape image, ideally around 1600×500px (at least 1200px wide) — it's cropped to fill a wide strip, so keep the important part centered since the edges can get trimmed on very wide or narrow screens."
+        helpText="Sits behind the train name at the top of the page. Use a landscape image, ideally around 1600×500px (at least 1200px wide) — it's cropped to fill a wide strip, so keep the important part roughly centered since the edges can get trimmed on very wide or narrow screens."
         value={data.imageUrl}
         onChange={(url) => update({ imageUrl: url })}
       />
       <input type="hidden" name="imageUrl" value={data.imageUrl} />
+
+      {data.imageUrl && (
+        <div>
+          <Label htmlFor="imagePosition">Banner focal point</Label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            If the top or bottom of your image is getting cropped off, nudge this to match where the
+            important part is.
+          </p>
+          <div className="flex gap-2">
+            {IMAGE_POSITIONS.map((pos) => (
+              <label
+                key={pos}
+                className="flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm capitalize has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+              >
+                <input
+                  type="radio"
+                  name="imagePosition"
+                  value={pos}
+                  checked={data.imagePosition === pos}
+                  onChange={() => update({ imagePosition: pos })}
+                  className="accent-primary"
+                />
+                {pos}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="border-t border-border pt-4">
         <ImageUploadField

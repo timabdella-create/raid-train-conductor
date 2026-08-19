@@ -74,10 +74,22 @@ export default async function PublicTrainPage({
 
   return (
     <main className="min-h-screen bg-background pb-16">
-      <div className="relative h-56 w-full overflow-hidden sm:h-72">
+      <div className="relative mx-auto h-56 w-full max-w-[1600px] overflow-hidden sm:h-72 lg:h-80">
         {train.image_url ? (
           <>
-            <Image src={train.image_url} alt={train.name} fill className="object-cover" priority />
+            <Image
+              src={train.image_url}
+              alt={train.name}
+              fill
+              className={`object-cover ${
+                train.image_position === "top"
+                  ? "object-top"
+                  : train.image_position === "bottom"
+                    ? "object-bottom"
+                    : "object-center"
+              }`}
+              priority
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           </>
         ) : (

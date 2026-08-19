@@ -11,6 +11,7 @@ export const TRAIN_CATEGORIES = [
   "Collectibles",
   "Books",
   "Home Decor",
+  "Pen Battle",
   "General Merchandise",
 ] as const;
 

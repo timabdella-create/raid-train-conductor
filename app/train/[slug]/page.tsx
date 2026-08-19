@@ -74,7 +74,7 @@ export default async function PublicTrainPage({
 
   return (
     <main className="min-h-screen bg-background pb-16">
-      <div className="relative mx-auto h-56 w-full max-w-[1600px] overflow-hidden sm:h-72 lg:h-80">
+      <div className="relative mx-auto h-72 w-full max-w-[1600px] overflow-hidden sm:h-96 lg:h-[30rem]">
         {train.image_url ? (
           <>
             <Image

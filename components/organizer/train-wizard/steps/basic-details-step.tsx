@@ -76,7 +76,7 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
 
       <ImageUploadField
         label="Train banner (optional)"
-        helpText="Sits behind the train name at the top of the page. Use a landscape image, ideally around 1600×500px (at least 1200px wide) — it's cropped to fill a wide strip, so keep the important part roughly centered since the edges can get trimmed on very wide or narrow screens."
+        helpText="Sits behind the train name at the top of the page. Use a landscape image, ideally around 1600×700px (at least 1200px wide) — taller square-ish images still get cropped some, so keep the important part roughly centered, and use the focal point option below if it's getting trimmed off the top or bottom."
         value={data.imageUrl}
         onChange={(url) => update({ imageUrl: url })}
       />

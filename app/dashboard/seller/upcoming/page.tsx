@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import { CancelParticipationButton } from "@/components/seller/cancel-participation-button";
 import { CheckInButton } from "@/components/seller/check-in-button";
+import { DownloadThumbnailButton } from "@/components/train/download-thumbnail-button";
 import { cancelParticipation, checkInToTrain } from "../actions";
 
 export default async function UpcomingTrainsPage() {
@@ -31,7 +32,7 @@ export default async function UpcomingTrainsPage() {
   const trainIds = [...new Set((participants ?? []).map((p) => p.raid_train_id))];
   const { data: trains } = await supabase
     .from("raid_trains")
-    .select("id, name, slug, event_date, start_time, timezone, check_in_minutes_before")
+    .select("id, name, slug, event_date, start_time, timezone, check_in_minutes_before, seller_thumbnail_url")
     .in("id", trainIds.length > 0 ? trainIds : ["00000000-0000-0000-0000-000000000000"]);
 
   const trainById = new Map((trains ?? []).map((t) => [t.id, t]));
@@ -111,7 +112,10 @@ export default async function UpcomingTrainsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {train.seller_thumbnail_url && (
+                      <DownloadThumbnailButton url={train.seller_thumbnail_url} trainName={train.name} />
+                    )}
                     {!alreadyCheckedIn && checkInOpen && <CheckInButton action={boundCheckIn} />}
                     <CancelParticipationButton trainName={train.name} action={boundCancel} />
                   </div>

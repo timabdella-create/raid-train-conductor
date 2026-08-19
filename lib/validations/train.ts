@@ -29,6 +29,7 @@ export const basicDetailsSchema = z.object({
   theme: z.string().trim().max(100).optional().or(z.literal("")),
   category: z.enum(TRAIN_CATEGORIES, { required_error: "Choose a category." }),
   imageUrl: z.string().trim().url().optional().or(z.literal("")),
+  sellerThumbnailUrl: z.string().trim().url().optional().or(z.literal("")),
 });
 export type BasicDetailsInput = z.infer<typeof basicDetailsSchema>;
 

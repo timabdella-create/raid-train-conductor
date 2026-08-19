@@ -8,12 +8,21 @@ import { Label } from "@/components/ui/label";
 interface ImageUploadFieldProps {
   value: string;
   onChange: (url: string) => void;
+  label?: string;
+  helpText?: string;
+  id?: string;
 }
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
-export function ImageUploadField({ value, onChange }: ImageUploadFieldProps) {
+export function ImageUploadField({
+  value,
+  onChange,
+  label = "Train image or thumbnail (optional)",
+  helpText,
+  id = "trainImage",
+}: ImageUploadFieldProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,15 +74,16 @@ export function ImageUploadField({ value, onChange }: ImageUploadFieldProps) {
 
   return (
     <div>
-      <Label htmlFor="trainImage">Train image or thumbnail (optional)</Label>
+      <Label htmlFor={id}>{label}</Label>
+      {helpText && <p className="mb-2 text-xs text-muted-foreground">{helpText}</p>}
       {value && (
         <div className="relative mb-3 h-40 w-full overflow-hidden rounded-md border border-border">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="Train thumbnail preview" className="h-full w-full object-cover" />
+          <img src={value} alt="Thumbnail preview" className="h-full w-full object-cover" />
         </div>
       )}
       <input
-        id="trainImage"
+        id={id}
         type="file"
         accept={ACCEPTED_TYPES.join(",")}
         onChange={handleFileChange}

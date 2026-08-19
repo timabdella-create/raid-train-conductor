@@ -22,6 +22,7 @@ export interface WizardData {
   theme: string;
   category: string;
   imageUrl: string;
+  sellerThumbnailUrl: string;
   eventDate: string;
   startTime: string;
   endTime: string;
@@ -45,6 +46,7 @@ export const EMPTY_WIZARD_DATA: WizardData = {
   theme: "",
   category: "",
   imageUrl: "",
+  sellerThumbnailUrl: "",
   eventDate: "",
   startTime: "",
   endTime: "",

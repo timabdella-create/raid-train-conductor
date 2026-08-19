@@ -63,6 +63,7 @@ export async function updateTrain(
     theme: data.theme || null,
     category: data.category,
     image_url: data.imageUrl || null,
+    seller_thumbnail_url: data.sellerThumbnailUrl || null,
     visibility: data.visibility,
     signup_mode: data.signupMode,
     rules: data.rules || null,

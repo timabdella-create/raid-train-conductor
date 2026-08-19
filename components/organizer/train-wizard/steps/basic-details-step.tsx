@@ -76,6 +76,17 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
 
       <ImageUploadField value={data.imageUrl} onChange={(url) => update({ imageUrl: url })} />
       <input type="hidden" name="imageUrl" value={data.imageUrl} />
+
+      <div className="border-t border-border pt-4">
+        <ImageUploadField
+          id="sellerThumbnail"
+          label="Seller show thumbnail (optional)"
+          helpText="A separate image sellers can download from the train page and use as their own Whatnot show thumbnail — different from the banner image above."
+          value={data.sellerThumbnailUrl}
+          onChange={(url) => update({ sellerThumbnailUrl: url })}
+        />
+        <input type="hidden" name="sellerThumbnailUrl" value={data.sellerThumbnailUrl} />
+      </div>
     </div>
   );
 }

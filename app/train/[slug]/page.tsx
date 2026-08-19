@@ -8,6 +8,7 @@ import { CountdownTimer } from "@/components/train/countdown-timer";
 import { ShareButtons } from "@/components/train/share-buttons";
 import { BookmarkButton } from "@/components/train/bookmark-button";
 import { BookmarkAllButton } from "@/components/train/bookmark-all-button";
+import { DownloadThumbnailButton } from "@/components/train/download-thumbnail-button";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import { loadPublicTrain } from "@/lib/trains/load-public-train";
 import { createClient } from "@/lib/supabase/server";
@@ -114,6 +115,26 @@ export default async function PublicTrainPage({
           </span>{" "}
           · {organizerHostedCount} {organizerHostedCount === 1 ? "train" : "trains"} hosted
         </p>
+
+        {train.seller_thumbnail_url && (
+          <div className="mt-4 rounded-lg border border-border bg-card p-4">
+            <p className="mb-2 text-sm font-medium">Show thumbnail for sellers</p>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Signed up for a slot? Grab this image and use it as your own Whatnot show thumbnail.
+            </p>
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="h-24 w-24 shrink-0 overflow-hidden rounded-md border border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={train.seller_thumbnail_url}
+                  alt="Show thumbnail"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <DownloadThumbnailButton url={train.seller_thumbnail_url} trainName={train.name} />
+            </div>
+          </div>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <BookmarkAllButton

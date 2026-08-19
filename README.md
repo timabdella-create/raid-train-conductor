@@ -434,3 +434,11 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - Only one pending transfer per train at a time — starting a new one while one's outstanding is blocked until the sender cancels it.
 - **`/dashboard/organizer/trains/[trainId]/transfer`** (new page): shows the request form, or the pending outgoing request with a Cancel button if one exists.
 - The organizer dashboard now shows an "Incoming transfer requests" card at the top when someone has sent *you* a train — Accept moves `raid_trains.organizer_id` over immediately; Decline just closes the request. Both actions are logged to `train_activity_log`.
+
+## 28. Seller Show Thumbnail
+
+- Organizers can now upload a second, optional image per train — a "seller show thumbnail" — separate from the train's own banner image. It's meant to be downloaded by sellers and used as their own Whatnot show thumbnail when they go live, so it's typically a square/promo-style image rather than the wide banner.
+- **`supabase/migrations/0013_seller_thumbnail.sql`** (new, applied): adds `seller_thumbnail_url` to `raid_trains`. Reuses the existing public `train-images` storage bucket and owner-scoped upload policies from §(storage setup) — no new bucket needed.
+- Upload happens in the same Basic Details step of the train wizard/edit form as the banner image, via a second `ImageUploadField` (that component now takes `label`/`helpText`/`id` props instead of being hardcoded to the banner's copy).
+- **`components/train/download-thumbnail-button.tsx`** (new): fetches the image as a blob and triggers a real file download (not just an image preview tab) — falls back to opening the image in a new tab if the fetch fails for any reason.
+- Shown in two places once an organizer sets it: on the public train page (with a preview + download button, visible to anyone browsing/applying), and on a seller's "Upcoming trains" dashboard list next to each train they're confirmed for.

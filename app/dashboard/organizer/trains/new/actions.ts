@@ -100,6 +100,7 @@ export async function createTrain(
       theme: data.theme || null,
       category: data.category,
       image_url: data.imageUrl || null,
+      seller_thumbnail_url: data.sellerThumbnailUrl || null,
       event_date: data.eventDate,
       start_time: `${data.startTime}:00`,
       end_time: `${data.endTime}:00`,

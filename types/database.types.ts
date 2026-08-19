@@ -23,6 +23,7 @@ export type NotificationType =
   | "replacement_offer" | "custom";
 export type DeliveryMethod = "email" | "sms" | "push" | "discord";
 export type DeliveryStatus = "queued" | "sent" | "failed";
+export type TransferStatus = "pending" | "accepted" | "declined" | "cancelled";
 
 interface Table<Row, Insert, Update> {
   Row: Row;
@@ -239,6 +240,17 @@ export interface Database {
         { user_id: string; raid_train_id: string },
         Record<string, never>
       >;
+      train_transfers: Table<
+        {
+          id: string; raid_train_id: string; from_organizer_id: string; to_organizer_id: string;
+          to_email: string; status: TransferStatus; created_at: string; responded_at: string | null;
+        },
+        {
+          raid_train_id: string; from_organizer_id: string; to_organizer_id: string;
+          to_email: string; status?: TransferStatus;
+        },
+        Record<string, never>
+      >;
     };
     Views: {
       train_applications_seller_view: {
@@ -315,6 +327,9 @@ export interface Database {
         { p_seller_ids: string[] },
         { seller_id: string; completed_trains: number }[]
       >;
+      initiate_train_transfer: Fn<{ p_raid_train_id: string; p_to_email: string }, string>;
+      respond_to_train_transfer: Fn<{ p_transfer_id: string; p_accept: boolean }, undefined>;
+      cancel_train_transfer: Fn<{ p_transfer_id: string }, undefined>;
     };
   };
 }

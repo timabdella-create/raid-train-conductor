@@ -425,3 +425,12 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - The hero gradient (homepage banner, train page fallback banner) now runs purple → fuchsia → deep teal instead of gold → orange → cyan.
 - Left the functional status colors alone (green/amber/red/sky in badges and success/warning messages) — those signal state (approved/pending/error), not brand, so mixing in fuchsia/purple there would hurt readability rather than help it.
 - Added `--soft-pink` (`#E982B5`) as a defined-but-unused CSS variable for future accents.
+
+## 27. Transfer Train Ownership
+
+- Organizers can hand a train off to another organizer from the train's page ("Transfer ownership"). It's a request/accept flow, not an instant change: the sender enters the recipient's account email, and ownership only moves once the recipient logs in and accepts — mirroring the existing invite/apply pattern (train_applications) rather than a one-click irreversible action.
+- **`supabase/migrations/0012_train_transfers.sql`** (new, applied): a `train_transfers` table plus three `SECURITY DEFINER` RPCs — `initiate_train_transfer(train_id, to_email)`, `respond_to_train_transfer(transfer_id, accept)`, and `cancel_train_transfer(transfer_id)`. The recipient is looked up by their login email (`public.users.email`), which is why this has to go through an RPC — `public.users` isn't selectable cross-user under RLS. Requests fail loudly (e.g. "No organizer account found for that email") rather than silently doing nothing.
+- Recipients must already have an organizer account on the platform. If the email doesn't match one, the sender gets a clear error explaining why, instead of the request just disappearing.
+- Only one pending transfer per train at a time — starting a new one while one's outstanding is blocked until the sender cancels it.
+- **`/dashboard/organizer/trains/[trainId]/transfer`** (new page): shows the request form, or the pending outgoing request with a Cancel button if one exists.
+- The organizer dashboard now shows an "Incoming transfer requests" card at the top when someone has sent *you* a train — Accept moves `raid_trains.organizer_id` over immediately; Decline just closes the request. Both actions are logged to `train_activity_log`.

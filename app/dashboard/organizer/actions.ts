@@ -4,6 +4,17 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function respondToTransfer(transferId: string, accept: boolean) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.rpc("respond_to_train_transfer", { p_transfer_id: transferId, p_accept: accept });
+  revalidatePath("/dashboard/organizer");
+}
+
 const organizerProfileSchema = z.object({
   organizerName: z.string().trim().min(2, "Organizer name must be at least 2 characters.").max(80),
   whatnotUsername: z.string().trim().max(50).optional().or(z.literal("")),

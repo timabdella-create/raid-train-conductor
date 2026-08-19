@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { TrainStatusBadge } from "@/components/train/status-badge";
 import { OrganizerProfileForm } from "@/components/organizer/organizer-profile-form";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
+import { respondToTransfer } from "./actions";
 
 export default async function OrganizerDashboardPage() {
   const supabase = createClient();
@@ -58,6 +60,28 @@ export default async function OrganizerDashboardPage() {
     }
   }
 
+  const { data: incomingTransfers } = await supabase
+    .from("train_transfers")
+    .select("id, raid_train_id, from_organizer_id, created_at")
+    .eq("to_organizer_id", organizerProfile.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const transferTrainIds = [...new Set((incomingTransfers ?? []).map((t) => t.raid_train_id))];
+  const transferOrganizerIds = [...new Set((incomingTransfers ?? []).map((t) => t.from_organizer_id))];
+
+  const { data: transferTrains } =
+    transferTrainIds.length > 0
+      ? await supabase.from("raid_trains").select("id, name").in("id", transferTrainIds)
+      : { data: [] as { id: string; name: string }[] };
+  const { data: transferSenders } =
+    transferOrganizerIds.length > 0
+      ? await supabase.from("organizer_profiles").select("id, organizer_name").in("id", transferOrganizerIds)
+      : { data: [] as { id: string; organizer_name: string }[] };
+
+  const trainNameById = new Map((transferTrains ?? []).map((t) => [t.id, t.name]));
+  const senderNameById = new Map((transferSenders ?? []).map((o) => [o.id, o.organizer_name]));
+
   const activeCount = trains?.filter((t) => t.status === "published" || t.status === "live").length ?? 0;
   const totalOpenSlots = [...openSlotsByTrain.values()].reduce((a, b) => a + b, 0);
 
@@ -104,6 +128,41 @@ export default async function OrganizerDashboardPage() {
           <p className="text-2xl font-semibold">{waitlistedSellers?.length ?? 0}</p>
         </Card>
       </div>
+
+      {(incomingTransfers ?? []).length > 0 && (
+        <Card className="border-primary/40 bg-primary/10">
+          <CardHeader>
+            <CardTitle>Incoming transfer requests</CardTitle>
+            <CardDescription>Another organizer wants to hand a train off to you.</CardDescription>
+          </CardHeader>
+          <ul className="space-y-3">
+            {(incomingTransfers ?? []).map((transfer) => {
+              const acceptAction = respondToTransfer.bind(null, transfer.id, true);
+              const declineAction = respondToTransfer.bind(null, transfer.id, false);
+              return (
+                <li key={transfer.id} className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm">
+                    <span className="font-medium">{trainNameById.get(transfer.raid_train_id) ?? "A raid train"}</span>{" "}
+                    from <span className="font-medium">{senderNameById.get(transfer.from_organizer_id) ?? "another organizer"}</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <form action={acceptAction}>
+                      <Button type="submit" className="px-3 py-1.5 text-xs">
+                        Accept
+                      </Button>
+                    </form>
+                    <form action={declineAction}>
+                      <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">
+                        Decline
+                      </Button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       <Leaderboard />
 

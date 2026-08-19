@@ -123,6 +123,9 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
           <Link href={`/dashboard/organizer/trains/${train.id}/edit`}>
             <Button variant="secondary">Edit</Button>
           </Link>
+          <Link href={`/dashboard/organizer/trains/${train.id}/transfer`}>
+            <Button variant="secondary">Transfer ownership</Button>
+          </Link>
           {train.visibility !== "private" || train.status === "published" ? (
             <a href={publicUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="secondary">View public page</Button>

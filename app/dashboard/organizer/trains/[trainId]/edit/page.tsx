@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TrainWizard, type WizardData } from "@/components/organizer/train-wizard/train-wizard";
+import { hasScheduleEngagement } from "@/lib/trains/schedule-lock";
 import { updateTrain } from "../actions";
 
 export default async function EditTrainPage({ params }: { params: { trainId: string } }) {
@@ -56,18 +57,26 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
 
   const boundUpdateTrain = updateTrain.bind(null, train.id);
 
+  // The schedule locks only once someone has actually engaged with it —
+  // a confirmed seller or a pending application — not just because the
+  // train is published. A live train nobody's applied to yet can still
+  // have its date/time freely edited.
+  const scheduleLocked = await hasScheduleEngagement(supabase, train.id);
+
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-1 text-2xl font-bold">Edit {train.name}</h1>
       <p className="mb-6 text-muted-foreground">
         {train.status === "draft"
           ? "This train is still a draft — nothing here is public yet."
-          : "This train is live. Schedule timing is locked; everything else can still change."}
+          : scheduleLocked
+            ? "This train is live and sellers are already confirmed or waiting on a decision, so schedule timing is locked — everything else can still change."
+            : "This train is live, but nobody's confirmed or applied yet, so you can still adjust the schedule if you need to."}
       </p>
       <TrainWizard
         action={boundUpdateTrain}
         initialData={initialData}
-        scheduleLocked={train.status !== "draft"}
+        scheduleLocked={scheduleLocked}
         publishLabel={train.status === "draft" ? "Publish train" : "Save changes"}
         showDraftOption={train.status === "draft"}
       />

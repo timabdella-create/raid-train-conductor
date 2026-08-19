@@ -7,6 +7,7 @@ import { createTrainSchema } from "@/lib/validations/train";
 import { generateSlots } from "@/lib/trains/generate-slots";
 import { slugify, withUniqueSuffix, generateInviteCode } from "@/lib/trains/slug";
 import { parseTrainFormData } from "@/lib/trains/parse-form";
+import { hasScheduleEngagement } from "@/lib/trains/schedule-lock";
 import type { Database } from "@/types/database.types";
 
 export type TrainFormState = {
@@ -53,9 +54,12 @@ export async function updateTrain(
   }
   const data = parsed.data;
 
-  // Schedule fields are locked once a train is published so shared links and
-  // any (future) confirmed sellers never silently shift to a new time.
-  const scheduleLocked = train.status === "published" || train.status === "live";
+  // Schedule fields lock once someone has actually engaged with them — a
+  // confirmed seller or a pending application — regardless of whether the
+  // train is still a draft or has been live for weeks. Re-checked here
+  // server-side (same logic the edit page uses to show the lock in the UI)
+  // so a stale client can't slip a schedule change past an active seller.
+  const scheduleLocked = await hasScheduleEngagement(supabase, trainId);
 
   const updatePayload: Database["public"]["Tables"]["raid_trains"]["Update"] = {
     name: data.name,

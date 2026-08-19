@@ -90,6 +90,24 @@ function SubmitButtons({ showDraftOption, publishLabel }: { showDraftOption: boo
   );
 }
 
+/**
+ * Lets someone editing an existing train save from wherever they are in the
+ * wizard — e.g. swap the banner image on step 1 and save immediately —
+ * instead of clicking Next five times to reach the review step. Always
+ * submits action="draft" (a no-op on status either way; only an explicit
+ * "publish" action on the review step can move a draft train live) so a
+ * quick save can never accidentally publish a train the organizer isn't
+ * ready to publish yet.
+ */
+function QuickSaveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" name="action" value="draft" variant="secondary" isLoading={pending}>
+      Save changes
+    </Button>
+  );
+}
+
 export function TrainWizard({
   action,
   initialData,
@@ -97,6 +115,7 @@ export function TrainWizard({
   publishLabel = "Publish train",
   showDraftOption = true,
 }: TrainWizardProps) {
+  const isEditing = Boolean(initialData);
   const [step, setStep] = useState(1);
   const [data, setData] = useState<WizardData>(initialData ?? EMPTY_WIZARD_DATA);
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
@@ -142,11 +161,16 @@ export function TrainWizard({
     setStep((s) => Math.max(s - 1, 1));
   }
 
+  function jumpToStep(target: number) {
+    setStepErrors({});
+    setStep(target);
+  }
+
   const combinedErrors = { ...stepErrors, ...(state.fieldErrors ?? {}) };
 
   return (
     <div>
-      <WizardProgress currentStep={step} />
+      <WizardProgress currentStep={step} onStepClick={isEditing ? jumpToStep : undefined} />
 
       <form action={formAction} noValidate>
         {state.error && (
@@ -168,18 +192,21 @@ export function TrainWizard({
         <RulesStep data={data} update={update} visible={step === 5} />
         <ReviewStep data={data} visible={step === 6} />
 
-        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
           <Button type="button" variant="ghost" onClick={goBack} disabled={step === 1}>
             Back
           </Button>
 
-          {step < 6 ? (
-            <Button type="button" onClick={goNext}>
-              Next
-            </Button>
-          ) : (
-            <SubmitButtons showDraftOption={showDraftOption} publishLabel={publishLabel} />
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            {isEditing && step < 6 && <QuickSaveButton />}
+            {step < 6 ? (
+              <Button type="button" onClick={goNext}>
+                Next
+              </Button>
+            ) : (
+              <SubmitButtons showDraftOption={showDraftOption} publishLabel={publishLabel} />
+            )}
+          </div>
         </div>
       </form>
     </div>

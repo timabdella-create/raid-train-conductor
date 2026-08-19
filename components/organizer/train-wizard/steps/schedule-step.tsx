@@ -40,9 +40,10 @@ export function ScheduleStep({ data, update, errors, visible, locked }: Props) {
     <div className={visible ? "space-y-4" : "hidden"}>
       {locked && (
         <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          This train is published, so the date and time settings are locked to
-          protect the schedule sellers and shoppers already have. Unpublish it
-          first if you need to change these.
+          The date and time settings are locked because a seller is already
+          confirmed or has an application pending on this train — changing
+          the schedule now would strand them. Resolve or remove those first
+          if you need to reschedule.
         </p>
       )}
 

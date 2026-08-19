@@ -481,3 +481,9 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - The wizard's Basic Details step now shows a "How should the banner be shown?" choice once an image is uploaded: "Fill the banner" (existing crop-to-fill behavior) or "Show the whole image" (never crops, guaranteed).
 - On the public train page, `contain` mode renders two stacked images: a blurred, scaled-up copy of the same image filling the whole strip as a backdrop (the same letterboxing look Spotify/YouTube use), with the sharp, uncropped image on top via `object-contain`. This avoids plain empty bars while guaranteeing nothing in the actual image ever gets cut off.
 - The existing focal-point control (top/center/bottom) still applies in both modes — in `contain` mode it controls where the image sits within any extra space instead of what gets cropped.
+
+## 34. Co-Conductor Cap
+
+- Each train can now have at most 4 active co-conductors (pending invites plus accepted co-conductors combined) — previously there was no limit at all.
+- **`supabase/migrations/0018_co_conductor_cap.sql`** (new, applied): `invite_co_conductor()` counts existing `pending`/`accepted` rows for the train and raises an exception once the count reaches 4, before doing any lookup on the invited email.
+- The train overview page's Co-conductors card mirrors this: once a train is at the cap, the invite form is replaced with a note explaining the limit instead of letting the organizer submit an invite that the database would just reject.

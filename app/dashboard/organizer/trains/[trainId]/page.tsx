@@ -11,6 +11,8 @@ import { setTrainStatus, deleteTrain, cloneTrain, inviteCoConductor, removeCoCon
 import { CloneForm } from "./clone-form";
 import { CoConductorForm } from "./co-conductor-form";
 
+const CO_CONDUCTOR_CAP = 4;
+
 export default async function TrainOverviewPage({ params }: { params: { trainId: string } }) {
   const supabase = createClient();
   const {
@@ -96,6 +98,8 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
       ? await supabase.from("organizer_profiles").select("id, organizer_name").in("id", coConductorOrganizerIds)
       : { data: [] as { id: string; organizer_name: string }[] };
   const coConductorNameById = new Map((coConductorOrganizers ?? []).map((o) => [o.id, o.organizer_name]));
+  const coConductorCount = (coConductors ?? []).length;
+  const atCoConductorCap = coConductorCount >= CO_CONDUCTOR_CAP;
 
   const openCount = slots?.filter((s) => s.status === "open").length ?? 0;
   const filledCount = (slots?.length ?? 0) - openCount;
@@ -267,7 +271,7 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
           <CardTitle>Co-conductors</CardTitle>
           <CardDescription>
             {access.isOwner
-              ? "Add another organizer to help approve applications, manage the schedule and waitlist, and message sellers on this train."
+              ? `Add another organizer to help approve applications, manage the schedule and waitlist, and message sellers on this train. Up to ${CO_CONDUCTOR_CAP} at a time.`
               : "Organizers who help manage this train."}
           </CardDescription>
         </CardHeader>
@@ -301,7 +305,15 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
           <p className="mb-4 text-sm text-muted-foreground">No co-conductors yet.</p>
         )}
 
-        {access.isOwner && <CoConductorForm action={boundInviteCoConductor} />}
+        {access.isOwner && (
+          atCoConductorCap ? (
+            <p className="text-sm text-muted-foreground">
+              This train has reached the maximum of {CO_CONDUCTOR_CAP} co-conductors. Remove one to invite another.
+            </p>
+          ) : (
+            <CoConductorForm action={boundInviteCoConductor} />
+          )
+        )}
       </Card>
 
       <Card>

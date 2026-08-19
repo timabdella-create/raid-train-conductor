@@ -74,7 +74,12 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
         </div>
       </div>
 
-      <ImageUploadField value={data.imageUrl} onChange={(url) => update({ imageUrl: url })} />
+      <ImageUploadField
+        label="Train banner (optional)"
+        helpText="Sits behind the train name at the top of the page. Use a landscape image, ideally around 1600×500px (at least 1200px wide) — it's cropped to fill a wide strip, so keep the important part centered since the edges can get trimmed on very wide or narrow screens."
+        value={data.imageUrl}
+        onChange={(url) => update({ imageUrl: url })}
+      />
       <input type="hidden" name="imageUrl" value={data.imageUrl} />
 
       <div className="border-t border-border pt-4">

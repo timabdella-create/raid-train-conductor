@@ -2,35 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { assertCanManageTrain } from "@/lib/trains/access";
 import { sendNotification, getUserIdForSeller } from "@/lib/notifications/send";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import type { NotificationType } from "@/types/database.types";
-
-async function assertOrganizerOwnsTrain(trainId: string) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated.");
-
-  const { data: train } = await supabase
-    .from("raid_trains")
-    .select("id, organizer_id")
-    .eq("id", trainId)
-    .maybeSingle();
-  if (!train) throw new Error("Train not found.");
-
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) {
-    throw new Error("Not authorized.");
-  }
-
-  return { supabase, userId: user.id };
-}
 
 function revalidateTrain(trainId: string) {
   revalidatePath(`/dashboard/organizer/trains/${trainId}/applications`);
@@ -70,7 +45,7 @@ async function notifySeller(
 }
 
 export async function approveApplication(trainId: string, applicationId: string) {
-  const { supabase, userId } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase, userId } = await assertCanManageTrain(trainId);
 
   const { data: application } = await supabase
     .from("train_applications")
@@ -105,7 +80,7 @@ export async function approveApplication(trainId: string, applicationId: string)
 }
 
 export async function rejectApplication(trainId: string, applicationId: string) {
-  const { supabase, userId } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase, userId } = await assertCanManageTrain(trainId);
 
   const { data: application } = await supabase
     .from("train_applications")
@@ -136,7 +111,7 @@ export async function rejectApplication(trainId: string, applicationId: string) 
 }
 
 export async function addApplicationToWaitlist(trainId: string, applicationId: string) {
-  const { supabase, userId } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase, userId } = await assertCanManageTrain(trainId);
 
   const { data: application } = await supabase
     .from("train_applications")
@@ -192,7 +167,7 @@ export async function addApplicationToWaitlist(trainId: string, applicationId: s
 }
 
 export async function moveApplicationToSlot(trainId: string, applicationId: string, formData: FormData) {
-  const { supabase, userId } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase, userId } = await assertCanManageTrain(trainId);
   const newSlotId = formData.get("newSlotId");
   if (typeof newSlotId !== "string" || !newSlotId) return;
 

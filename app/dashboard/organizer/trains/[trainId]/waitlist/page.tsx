@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getTrainAccess } from "@/lib/trains/access";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,8 @@ export default async function WaitlistManagementPage({ params }: { params: { tra
     .maybeSingle();
   if (!train) notFound();
 
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) redirect("/dashboard/organizer");
+  const access = await getTrainAccess(train.id, train.organizer_id);
+  if (!access.canManage) redirect("/dashboard/organizer");
 
   await supabase.rpc("release_expired_waitlist_offers_for_train", { p_train_id: train.id });
 

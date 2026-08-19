@@ -15,6 +15,17 @@ export async function respondToTransfer(transferId: string, accept: boolean) {
   revalidatePath("/dashboard/organizer");
 }
 
+export async function respondToCoConductorInvite(inviteId: string, accept: boolean) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.rpc("respond_to_co_conductor_invite", { p_invite_id: inviteId, p_accept: accept });
+  revalidatePath("/dashboard/organizer");
+}
+
 const organizerProfileSchema = z.object({
   organizerName: z.string().trim().min(2, "Organizer name must be at least 2 characters.").max(80),
   whatnotUsername: z.string().trim().max(50).optional().or(z.literal("")),

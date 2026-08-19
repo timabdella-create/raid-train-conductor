@@ -4,9 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrainStatusBadge } from "@/components/train/status-badge";
+import type { TrainStatus } from "@/types/database.types";
 import { OrganizerProfileForm } from "@/components/organizer/organizer-profile-form";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
-import { respondToTransfer } from "./actions";
+import { respondToTransfer, respondToCoConductorInvite } from "./actions";
 
 export default async function OrganizerDashboardPage() {
   const supabase = createClient();
@@ -81,6 +82,47 @@ export default async function OrganizerDashboardPage() {
 
   const trainNameById = new Map((transferTrains ?? []).map((t) => [t.id, t.name]));
   const senderNameById = new Map((transferSenders ?? []).map((o) => [o.id, o.organizer_name]));
+
+  const { data: incomingCoConductorInvites } = await supabase
+    .from("train_co_conductors")
+    .select("id, raid_train_id, invited_by, created_at")
+    .eq("organizer_id", organizerProfile.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const { data: myCoConductorTrains } = await supabase
+    .from("train_co_conductors")
+    .select("id, raid_train_id, invited_by")
+    .eq("organizer_id", organizerProfile.id)
+    .eq("status", "accepted");
+
+  const coConductorRelevantTrainIds = [
+    ...new Set([
+      ...(incomingCoConductorInvites ?? []).map((i) => i.raid_train_id),
+      ...(myCoConductorTrains ?? []).map((t) => t.raid_train_id),
+    ]),
+  ];
+  const coConductorRelevantOrganizerIds = [
+    ...new Set([
+      ...(incomingCoConductorInvites ?? []).map((i) => i.invited_by),
+      ...(myCoConductorTrains ?? []).map((t) => t.invited_by),
+    ]),
+  ];
+
+  const { data: coConductorRelevantTrains } =
+    coConductorRelevantTrainIds.length > 0
+      ? await supabase
+          .from("raid_trains")
+          .select("id, name, slug, status, event_date, start_time, timezone")
+          .in("id", coConductorRelevantTrainIds)
+      : { data: [] as { id: string; name: string; slug: string; status: TrainStatus; event_date: string; start_time: string; timezone: string }[] };
+  const { data: coConductorRelevantOrganizers } =
+    coConductorRelevantOrganizerIds.length > 0
+      ? await supabase.from("organizer_profiles").select("id, organizer_name").in("id", coConductorRelevantOrganizerIds)
+      : { data: [] as { id: string; organizer_name: string }[] };
+
+  const coConductorTrainById = new Map((coConductorRelevantTrains ?? []).map((t) => [t.id, t]));
+  const coConductorOwnerNameById = new Map((coConductorRelevantOrganizers ?? []).map((o) => [o.id, o.organizer_name]));
 
   const activeCount = trains?.filter((t) => t.status === "published" || t.status === "live").length ?? 0;
   const totalOpenSlots = [...openSlotsByTrain.values()].reduce((a, b) => a + b, 0);
@@ -164,6 +206,44 @@ export default async function OrganizerDashboardPage() {
         </Card>
       )}
 
+      {(incomingCoConductorInvites ?? []).length > 0 && (
+        <Card className="border-primary/40 bg-primary/10">
+          <CardHeader>
+            <CardTitle>Incoming co-conductor invites</CardTitle>
+            <CardDescription>Another organizer wants your help running one of their trains.</CardDescription>
+          </CardHeader>
+          <ul className="space-y-3">
+            {(incomingCoConductorInvites ?? []).map((invite) => {
+              const acceptAction = respondToCoConductorInvite.bind(null, invite.id, true);
+              const declineAction = respondToCoConductorInvite.bind(null, invite.id, false);
+              return (
+                <li key={invite.id} className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm">
+                    <span className="font-medium">{coConductorTrainById.get(invite.raid_train_id)?.name ?? "A raid train"}</span>{" "}
+                    from{" "}
+                    <span className="font-medium">
+                      {coConductorOwnerNameById.get(invite.invited_by) ?? "another organizer"}
+                    </span>
+                  </p>
+                  <div className="flex gap-2">
+                    <form action={acceptAction}>
+                      <Button type="submit" className="px-3 py-1.5 text-xs">
+                        Accept
+                      </Button>
+                    </form>
+                    <form action={declineAction}>
+                      <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">
+                        Decline
+                      </Button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
       <Leaderboard />
 
       <Card>
@@ -203,6 +283,35 @@ export default async function OrganizerDashboardPage() {
           </ul>
         )}
       </Card>
+
+      {(myCoConductorTrains ?? []).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Trains you help manage</CardTitle>
+            <CardDescription>Co-conductor access — applications, schedule, waitlist, and messaging.</CardDescription>
+          </CardHeader>
+          <ul className="divide-y divide-border">
+            {(myCoConductorTrains ?? []).map((entry) => {
+              const train = coConductorTrainById.get(entry.raid_train_id);
+              if (!train) return null;
+              return (
+                <li key={entry.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <div>
+                    <Link href={`/dashboard/organizer/trains/${train.id}`} className="font-medium hover:underline">
+                      {train.name}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {train.event_date} • {train.start_time.slice(0, 5)} ({train.timezone}) • organized by{" "}
+                      {coConductorOwnerNameById.get(entry.invited_by) ?? "another organizer"}
+                    </p>
+                  </div>
+                  <TrainStatusBadge status={train.status} />
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 }

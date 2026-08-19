@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getTrainAccess } from "@/lib/trains/access";
 import { ScheduleManager, type ScheduleSlot } from "@/components/organizer/schedule-manager";
 import {
   swapSlotSellers,
@@ -24,12 +25,8 @@ export default async function ScheduleManagerPage({ params }: { params: { trainI
     .maybeSingle();
   if (!train) notFound();
 
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) redirect("/dashboard/organizer");
+  const access = await getTrainAccess(train.id, train.organizer_id);
+  if (!access.canManage) redirect("/dashboard/organizer");
 
   const { data: slots } = await supabase
     .from("train_slots")

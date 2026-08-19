@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getTrainAccess } from "@/lib/trains/access";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,12 +30,8 @@ export default async function ApplicationsPage({ params }: { params: { trainId: 
     .maybeSingle();
   if (!train) notFound();
 
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) redirect("/dashboard/organizer");
+  const access = await getTrainAccess(train.id, train.organizer_id);
+  if (!access.canManage) redirect("/dashboard/organizer");
 
   const { data: applications } = await supabase
     .from("train_applications")

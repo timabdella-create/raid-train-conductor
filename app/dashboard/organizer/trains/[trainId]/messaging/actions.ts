@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { assertCanManageTrain } from "@/lib/trains/access";
 import { sendNotification, getUserIdForSeller } from "@/lib/notifications/send";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
 import type { NotificationType } from "@/types/database.types";
@@ -9,32 +9,6 @@ import type { NotificationType } from "@/types/database.types";
 export interface MessageFormState {
   error?: string;
   success?: string;
-}
-
-async function assertOrganizerOwnsTrain(trainId: string) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated.");
-
-  const { data: train } = await supabase
-    .from("raid_trains")
-    .select("id, organizer_id")
-    .eq("id", trainId)
-    .maybeSingle();
-  if (!train) throw new Error("Train not found.");
-
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) {
-    throw new Error("Not authorized.");
-  }
-
-  return { supabase };
 }
 
 function revalidateMessaging(trainId: string) {
@@ -55,7 +29,7 @@ export async function messageAllSellers(
   _prevState: MessageFormState,
   formData: FormData
 ): Promise<MessageFormState> {
-  const { supabase } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase } = await assertCanManageTrain(trainId);
 
   const parsed = readSubjectAndMessage(formData);
   if ("error" in parsed) return parsed;
@@ -97,7 +71,7 @@ export async function messageOneSeller(
   _prevState: MessageFormState,
   formData: FormData
 ): Promise<MessageFormState> {
-  const { supabase } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase } = await assertCanManageTrain(trainId);
 
   const sellerId = formData.get("sellerId");
   if (typeof sellerId !== "string" || !sellerId) return { error: "Choose a seller." };
@@ -132,7 +106,7 @@ const QUICK_MESSAGE_TYPE: Record<QuickMessageKind, NotificationType> = {
 
 /** One-click send of a reminder / check-in notice / you're-next notice to one seller. */
 export async function sendQuickMessage(trainId: string, sellerId: string, kind: QuickMessageKind) {
-  const { supabase } = await assertOrganizerOwnsTrain(trainId);
+  const { supabase } = await assertCanManageTrain(trainId);
 
   const { data: train } = await supabase
     .from("raid_trains")

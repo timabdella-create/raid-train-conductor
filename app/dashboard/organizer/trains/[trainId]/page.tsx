@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getTrainAccess } from "@/lib/trains/access";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { TrainStatusBadge, SlotStatusBadge } from "@/components/train/status-badge";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
-import { setTrainStatus, deleteTrain, cloneTrain } from "./actions";
+import { setTrainStatus, deleteTrain, cloneTrain, inviteCoConductor, removeCoConductor } from "./actions";
 import { CloneForm } from "./clone-form";
+import { CoConductorForm } from "./co-conductor-form";
 
 export default async function TrainOverviewPage({ params }: { params: { trainId: string } }) {
   const supabase = createClient();
@@ -25,13 +28,8 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
 
   if (!train) notFound();
 
-  const { data: organizerProfile } = await supabase
-    .from("organizer_profiles")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!organizerProfile || organizerProfile.id !== train.organizer_id) {
+  const access = await getTrainAccess(train.id, train.organizer_id);
+  if (!access.canManage) {
     redirect("/dashboard/organizer");
   }
 
@@ -85,6 +83,20 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
   const missingThumbnail = train.image_url ? 0 : 1;
   const missingInfoTotal = missingShowLink + missingThumbnail + (pendingApplications?.length ?? 0);
 
+  const { data: coConductors } = await supabase
+    .from("train_co_conductors")
+    .select("id, organizer_id, to_email, status")
+    .eq("raid_train_id", train.id)
+    .in("status", ["pending", "accepted"])
+    .order("created_at", { ascending: true });
+
+  const coConductorOrganizerIds = [...new Set((coConductors ?? []).map((c) => c.organizer_id))];
+  const { data: coConductorOrganizers } =
+    coConductorOrganizerIds.length > 0
+      ? await supabase.from("organizer_profiles").select("id, organizer_name").in("id", coConductorOrganizerIds)
+      : { data: [] as { id: string; organizer_name: string }[] };
+  const coConductorNameById = new Map((coConductorOrganizers ?? []).map((o) => [o.id, o.organizer_name]));
+
   const openCount = slots?.filter((s) => s.status === "open").length ?? 0;
   const filledCount = (slots?.length ?? 0) - openCount;
   const publicUrl = `/train/${train.slug}`;
@@ -94,6 +106,7 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
   const cancelAction = setTrainStatus.bind(null, train.id, "cancelled");
   const deleteAction = deleteTrain.bind(null, train.id);
   const boundCloneTrain = cloneTrain.bind(null, train.id);
+  const boundInviteCoConductor = inviteCoConductor.bind(null, train.id);
 
   return (
     <div className="space-y-6">
@@ -102,6 +115,7 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
           <div className="mb-1 flex items-center gap-2">
             <h1 className="text-2xl font-bold">{train.name}</h1>
             <TrainStatusBadge status={train.status} />
+            {!access.isOwner && access.isCoConductor && <Badge tone="info">Co-conductor</Badge>}
           </div>
           <p className="text-muted-foreground">
             {train.event_date} • {train.start_time.slice(0, 5)}–{train.end_time.slice(0, 5)} ({train.timezone})
@@ -120,12 +134,16 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
           <Link href={`/dashboard/organizer/trains/${train.id}/messaging`}>
             <Button variant="secondary">Messaging</Button>
           </Link>
-          <Link href={`/dashboard/organizer/trains/${train.id}/edit`}>
-            <Button variant="secondary">Edit</Button>
-          </Link>
-          <Link href={`/dashboard/organizer/trains/${train.id}/transfer`}>
-            <Button variant="secondary">Transfer ownership</Button>
-          </Link>
+          {access.isOwner && (
+            <Link href={`/dashboard/organizer/trains/${train.id}/edit`}>
+              <Button variant="secondary">Edit</Button>
+            </Link>
+          )}
+          {access.isOwner && (
+            <Link href={`/dashboard/organizer/trains/${train.id}/transfer`}>
+              <Button variant="secondary">Transfer ownership</Button>
+            </Link>
+          )}
           {train.visibility !== "private" || train.status === "published" ? (
             <a href={publicUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="secondary">View public page</Button>
@@ -200,42 +218,86 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
         </Card>
       )}
 
+      {access.isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Actions</CardTitle>
+            <CardDescription>Publishing, pausing, cloning, and deleting this train.</CardDescription>
+          </CardHeader>
+          <div className="flex flex-wrap gap-3">
+            {train.status === "draft" && (
+              <form action={publishAction}>
+                <Button type="submit">Publish</Button>
+              </form>
+            )}
+            {train.status === "published" && (
+              <form action={unpublishAction}>
+                <Button type="submit" variant="secondary">
+                  Unpublish (back to draft)
+                </Button>
+              </form>
+            )}
+            {(train.status === "published" || train.status === "draft") && (
+              <form action={cancelAction}>
+                <Button type="submit" variant="destructive">
+                  Cancel train
+                </Button>
+              </form>
+            )}
+            <form action={deleteAction}>
+              <Button type="submit" variant="destructive">
+                Delete permanently
+              </Button>
+            </form>
+          </div>
+
+          <div className="mt-6 border-t border-border pt-4">
+            <p className="mb-2 text-sm font-medium">Clone this train to a new date</p>
+            <CloneForm action={boundCloneTrain} />
+          </div>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
-          <CardDescription>Publishing, pausing, cloning, and deleting this train.</CardDescription>
+          <CardTitle>Co-conductors</CardTitle>
+          <CardDescription>
+            {access.isOwner
+              ? "Add another organizer to help approve applications, manage the schedule and waitlist, and message sellers on this train."
+              : "Organizers who help manage this train."}
+          </CardDescription>
         </CardHeader>
-        <div className="flex flex-wrap gap-3">
-          {train.status === "draft" && (
-            <form action={publishAction}>
-              <Button type="submit">Publish</Button>
-            </form>
-          )}
-          {train.status === "published" && (
-            <form action={unpublishAction}>
-              <Button type="submit" variant="secondary">
-                Unpublish (back to draft)
-              </Button>
-            </form>
-          )}
-          {(train.status === "published" || train.status === "draft") && (
-            <form action={cancelAction}>
-              <Button type="submit" variant="destructive">
-                Cancel train
-              </Button>
-            </form>
-          )}
-          <form action={deleteAction}>
-            <Button type="submit" variant="destructive">
-              Delete permanently
-            </Button>
-          </form>
-        </div>
 
-        <div className="mt-6 border-t border-border pt-4">
-          <p className="mb-2 text-sm font-medium">Clone this train to a new date</p>
-          <CloneForm action={boundCloneTrain} />
-        </div>
+        {(coConductors ?? []).length > 0 ? (
+          <ul className="mb-4 space-y-2">
+            {(coConductors ?? []).map((c) => {
+              const boundRemove = removeCoConductor.bind(null, train.id, c.id);
+              const isMe = c.organizer_id === access.organizerProfileId;
+              return (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted px-3 py-2 text-sm">
+                  <span>
+                    {coConductorNameById.get(c.organizer_id) ?? c.to_email}
+                    {isMe && " (you)"}{" "}
+                    <Badge tone={c.status === "pending" ? "warning" : "success"} className="ml-1">
+                      {c.status === "pending" ? "Invite pending" : "Active"}
+                    </Badge>
+                  </span>
+                  {(access.isOwner || isMe) && (
+                    <form action={boundRemove}>
+                      <Button type="submit" variant="ghost" className="min-h-0 px-2 py-1 text-xs text-destructive">
+                        {isMe ? "Leave" : "Remove"}
+                      </Button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mb-4 text-sm text-muted-foreground">No co-conductors yet.</p>
+        )}
+
+        {access.isOwner && <CoConductorForm action={boundInviteCoConductor} />}
       </Card>
 
       <Card>

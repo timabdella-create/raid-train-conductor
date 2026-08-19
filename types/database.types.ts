@@ -24,6 +24,7 @@ export type NotificationType =
 export type DeliveryMethod = "email" | "sms" | "push" | "discord";
 export type DeliveryStatus = "queued" | "sent" | "failed";
 export type TransferStatus = "pending" | "accepted" | "declined" | "cancelled";
+export type CoConductorStatus = "pending" | "accepted" | "declined" | "removed";
 
 interface Table<Row, Insert, Update> {
   Row: Row;
@@ -254,6 +255,17 @@ export interface Database {
         },
         Record<string, never>
       >;
+      train_co_conductors: Table<
+        {
+          id: string; raid_train_id: string; organizer_id: string; invited_by: string;
+          to_email: string; status: CoConductorStatus; created_at: string; responded_at: string | null;
+        },
+        {
+          raid_train_id: string; organizer_id: string; invited_by: string;
+          to_email: string; status?: CoConductorStatus;
+        },
+        Record<string, never>
+      >;
     };
     Views: {
       train_applications_seller_view: {
@@ -333,6 +345,9 @@ export interface Database {
       initiate_train_transfer: Fn<{ p_raid_train_id: string; p_to_email: string }, string>;
       respond_to_train_transfer: Fn<{ p_transfer_id: string; p_accept: boolean }, undefined>;
       cancel_train_transfer: Fn<{ p_transfer_id: string }, undefined>;
+      invite_co_conductor: Fn<{ p_raid_train_id: string; p_to_email: string }, string>;
+      respond_to_co_conductor_invite: Fn<{ p_invite_id: string; p_accept: boolean }, undefined>;
+      remove_co_conductor: Fn<{ p_id: string }, undefined>;
     };
   };
 }

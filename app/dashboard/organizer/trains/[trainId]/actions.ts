@@ -295,3 +295,51 @@ export async function cloneTrain(
   revalidatePath("/dashboard/organizer");
   redirect(`/dashboard/organizer/trains/${newTrain.id}/edit`);
 }
+
+export type CoConductorFormState = { error?: string; success?: string };
+
+/** Owner invites another organizer (by their account email) as a co-conductor. */
+export async function inviteCoConductor(
+  trainId: string,
+  _prevState: CoConductorFormState,
+  formData: FormData
+): Promise<CoConductorFormState> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be logged in." };
+
+  const email = formData.get("toEmail");
+  if (typeof email !== "string" || !email.trim() || !email.includes("@")) {
+    return { error: "Enter the co-conductor's account email." };
+  }
+
+  const { error } = await supabase.rpc("invite_co_conductor", {
+    p_raid_train_id: trainId,
+    p_to_email: email,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/organizer/trains/${trainId}`);
+  return { success: `Invite sent to ${email.trim()}.` };
+}
+
+/**
+ * Removes a co-conductor. Works both when the train's owner removes someone
+ * and when a co-conductor removes themselves (leaves) — the underlying RPC
+ * checks both cases.
+ */
+export async function removeCoConductor(trainId: string, coConductorId: string) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.rpc("remove_co_conductor", { p_id: coConductorId });
+
+  revalidatePath(`/dashboard/organizer/trains/${trainId}`);
+  revalidatePath("/dashboard/organizer");
+}

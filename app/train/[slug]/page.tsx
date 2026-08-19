@@ -206,7 +206,7 @@ export default async function PublicTrainPage({
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold">Schedule</h2>
-          {train.signup_mode === "invite_only" ? (
+          {train.signup_mode === "invite_only" && !gatedByCode ? (
             <Badge tone="neutral">Invite only</Badge>
           ) : train.signup_mode === "waitlist_only" || openCount === 0 ? (
             <Link href={`/train/${train.slug}/apply${gatedByCode ? `?code=${searchParams.code}` : ""}`}>

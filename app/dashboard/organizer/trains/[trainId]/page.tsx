@@ -21,7 +21,7 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
   const { data: train } = await supabase
     .from("raid_trains")
     .select(
-      "id, organizer_id, name, slug, status, visibility, event_date, start_time, end_time, timezone, invite_code, category, theme, image_url, requires_show_link"
+      "id, organizer_id, name, slug, status, visibility, signup_mode, event_date, start_time, end_time, timezone, invite_code, category, theme, image_url, requires_show_link"
     )
     .eq("id", params.trainId)
     .maybeSingle();
@@ -208,12 +208,16 @@ export default async function TrainOverviewPage({ params }: { params: { trainId:
         </Card>
       )}
 
-      {train.visibility === "private" && train.invite_code && (
+      {(train.visibility === "private" || train.signup_mode === "invite_only") && train.invite_code && (
         <Card className="p-4">
           <p className="text-sm font-medium">Invite code</p>
           <p className="text-muted-foreground">
-            Share <code className="rounded bg-muted px-1.5 py-0.5">{train.invite_code}</code> along with
-            the link — private trains need both to view.
+            Share <code className="rounded bg-muted px-1.5 py-0.5">{train.invite_code}</code>
+            {train.visibility === "private" && " along with the link — private trains need both to view."}
+            {train.signup_mode === "invite_only" &&
+              " with sellers you want to let in. They add ?code=" +
+                train.invite_code +
+                " to the train link, and their application is confirmed automatically — no approval needed."}
           </p>
         </Card>
       )}

@@ -75,7 +75,10 @@ export async function updateTrain(
     additional_questions: data.additionalQuestions,
   };
 
-  if (data.visibility === "private") {
+  // Private trains need a code to view; invite_only trains need one to sign
+  // up (auto-approved on match) — either setting alone should keep a code
+  // around, and only losing both should clear it.
+  if (data.visibility === "private" || data.signupMode === "invite_only") {
     const { data: existingTrain } = await supabase
       .from("raid_trains")
       .select("invite_code")
@@ -263,7 +266,8 @@ export async function cloneTrain(
       requires_show_link: source.requires_show_link,
       sales_level_requirement: source.sales_level_requirement,
       additional_questions: source.additional_questions,
-      invite_code: source.visibility === "private" ? generateInviteCode() : null,
+      invite_code:
+        source.visibility === "private" || source.signup_mode === "invite_only" ? generateInviteCode() : null,
       cloned_from_id: source.id,
     })
     .select("id")

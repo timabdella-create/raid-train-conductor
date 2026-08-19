@@ -62,7 +62,9 @@ export async function createTrain(
     slug = withUniqueSuffix(base);
   }
 
-  const inviteCode = data.visibility === "private" ? generateInviteCode() : null;
+  // Private trains need a code to view; invite_only trains need one to sign up (auto-approved on match) — independent settings, either can trigger generation.
+  const inviteCode =
+    data.visibility === "private" || data.signupMode === "invite_only" ? generateInviteCode() : null;
 
   let slots;
   try {

@@ -13,7 +13,7 @@ interface Props {
 const SIGNUP_MODES = [
   { value: "open", label: "Open signup", description: "First qualified seller to claim a slot gets it." },
   { value: "approval_required", label: "Approval required", description: "Sellers request a slot; you approve or reject." },
-  { value: "invite_only", label: "Invite only", description: "You assign sellers to slots directly." },
+  { value: "invite_only", label: "Invite only", description: "Sellers need your invite code to grab a slot — they're confirmed automatically." },
   { value: "waitlist_only", label: "Waitlist only", description: "The schedule is full — sellers can only join a waitlist." },
 ] as const;
 
@@ -82,6 +82,13 @@ export function SignupSettingsStep({ data, update, errors, visible }: Props) {
           </p>
         )}
       </fieldset>
+
+      {data.visibility !== "private" && data.signupMode === "invite_only" && (
+        <p className="rounded-md bg-primary/10 p-3 text-xs text-muted-foreground">
+          We'll generate an invite code when you save. Sellers who apply with it are confirmed
+          automatically, no approval needed — everyone else just sees "Invite only."
+        </p>
+      )}
     </div>
   );
 }

@@ -83,6 +83,7 @@ export async function submitApplication(
     p_seller_notes: parsed.data.sellerNotes || null,
     p_show_url: parsed.data.showUrl || null,
     p_custom_answers: parsed.data.customAnswers,
+    p_invite_code: code || null,
   });
 
   if (error) {

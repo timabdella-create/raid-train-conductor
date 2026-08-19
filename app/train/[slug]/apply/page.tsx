@@ -211,10 +211,10 @@ export default async function ApplyPage({
         </p>
       )}
 
-      {train.signup_mode === "invite_only" ? (
+      {train.signup_mode === "invite_only" && !gatedByCode ? (
         <StatusPage title="Invite only" tone="neutral">
           <p className="text-muted-foreground">
-            This train is invite-only. Ask the organizer for an invite to join.
+            This train is invite-only. Ask the organizer for an invite code, then open the link they share with you to join.
           </p>
         </StatusPage>
       ) : train.signup_mode === "waitlist_only" || openSlots.length === 0 ? (
@@ -232,6 +232,8 @@ export default async function ApplyPage({
             <CardDescription>
               {train.signup_mode === "open"
                 ? "First come, first served — claiming a slot holds it for 10 minutes while you finish the form."
+                : train.signup_mode === "invite_only"
+                ? "You have a valid invite code — claim a slot and you'll be confirmed automatically, no approval needed."
                 : "Claiming a slot holds it for 10 minutes while you finish the form; the organizer reviews it after."}
             </CardDescription>
           </CardHeader>

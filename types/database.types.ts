@@ -299,6 +299,7 @@ export interface Database {
           p_seller_notes?: string | null;
           p_show_url?: string | null;
           p_custom_answers?: unknown;
+          p_invite_code?: string | null;
         },
         Database["public"]["Tables"]["train_applications"]["Row"]
       >;

@@ -500,3 +500,8 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - Counts distinct organizers and distinct riders active that week, and how many trains each one organized/rode: organizers = trains with `event_date` in the week and `status != 'cancelled'`, grouped by `organizer_id`; riders = `train_participants` rows on those trains with `confirmation_status = 'confirmed'`, excluding anyone whose `attendance_status` was a cancellation or no-show, grouped by `seller_id`.
 - Sent via the existing `sendEmail()` helper (`lib/email/resend.ts`) to `WEEKLY_REPORT_EMAIL` (defaults to the site owner's address if unset). Same `CRON_SECRET` bearer-auth as `send-reminders`.
 - **Note:** this — like the existing reminder emails — only actually sends once `RESEND_API_KEY` is configured on Vercel. It wasn't set at the time this was built, so reminder emails and this report were both only logging, not delivering, until that's added.
+
+## 37. Organizer's Rider Count On Train Page
+
+- The "Organized by X · N trains hosted" line on the public train page now also shows "· N trains ridden" — the organizer's own count of completed trains as a seller elsewhere, covering the common case of someone who both runs trains and rides on others'.
+- **`supabase/migrations/0019_organizer_rider_count.sql`** (new, applied): `get_organizer_rider_count(p_organizer_id)` joins the organizer's `organizer_profiles.user_id` to any matching `seller_profiles` row and counts their completed `train_participants`, returning 0 if they've never ridden as a seller.

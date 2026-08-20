@@ -53,11 +53,13 @@ export default async function PublicTrainPage({
   const sellersById = new Map<string, SellerInfo>();
   const supabase = createClient();
 
-  const [{ data: organizerProfile }, organizerCountResult] = await Promise.all([
+  const [{ data: organizerProfile }, organizerCountResult, organizerRiderCountResult] = await Promise.all([
     supabase.from("organizer_profiles").select("organizer_name").eq("id", train.organizer_id).maybeSingle(),
     supabase.rpc("get_organizer_completed_count", { p_organizer_id: train.organizer_id }),
+    supabase.rpc("get_organizer_rider_count", { p_organizer_id: train.organizer_id }),
   ]);
   const organizerHostedCount = organizerCountResult.data ?? 0;
+  const organizerRiddenCount = organizerRiderCountResult.data ?? 0;
 
   if (sellerIds.length > 0) {
     const [{ data: sellerRows }, { data: sellerCounts }] = await Promise.all([
@@ -141,6 +143,7 @@ export default async function PublicTrainPage({
             {organizerProfile?.organizer_name ?? "Unknown organizer"}
           </span>{" "}
           · {organizerHostedCount} {organizerHostedCount === 1 ? "train" : "trains"} hosted
+          {" "}· {organizerRiddenCount} {organizerRiddenCount === 1 ? "train" : "trains"} ridden
         </p>
 
         {train.seller_thumbnail_url && (

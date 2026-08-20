@@ -340,6 +340,7 @@ export interface Database {
         }[]
       >;
       get_organizer_completed_count: Fn<{ p_organizer_id: string }, number>;
+      get_organizer_rider_count: Fn<{ p_organizer_id: string }, number>;
       get_seller_completed_counts: Fn<
         { p_seller_ids: string[] },
         { seller_id: string; completed_trains: number }[]

@@ -45,7 +45,7 @@ export function BasicDetailsStep({ data, update, errors, visible }: Props) {
       </div>
 
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description and rules</Label>
         <Textarea
           id="description"
           name="description"

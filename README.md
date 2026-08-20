@@ -487,3 +487,9 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - Each train can now have at most 4 active co-conductors (pending invites plus accepted co-conductors combined) — previously there was no limit at all.
 - **`supabase/migrations/0018_co_conductor_cap.sql`** (new, applied): `invite_co_conductor()` counts existing `pending`/`accepted` rows for the train and raises an exception once the count reaches 4, before doing any lookup on the invited email.
 - The train overview page's Co-conductors card mirrors this: once a train is at the cap, the invite form is replaced with a note explaining the limit instead of letting the organizer submit an invite that the database would just reject.
+
+## 35. Homepage Announcement Popup
+
+- A dismissible modal now shows on every visit to the homepage announcing the weekly raffle: one Rider Winner and one Organizer Winner, each getting a $5 gift card for participating.
+- **`components/discovery/announcement-popup.tsx`** (new): client component, click-outside or the close button/`Escape`-style close button dismisses it for that page view (it's not persisted — reappears on the next homepage load, per how often it should show).
+- Rendered at the top of **`app/page.tsx`** only, so it never shows on train pages or dashboard routes.

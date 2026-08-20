@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { TrainActivity } from "@/components/discovery/train-activity";
+import { AnnouncementPopup } from "@/components/discovery/announcement-popup";
 
 const STEPS = [
   {
@@ -42,6 +43,7 @@ const FEATURES = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
+      <AnnouncementPopup />
       <section className="relative overflow-hidden bg-hero-mesh px-6 pb-24 pt-20 sm:pt-28">
         <div className="mx-auto flex max-w-6xl flex-col items-center text-center">
           <span className="animate-fade-up rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/80 backdrop-blur">

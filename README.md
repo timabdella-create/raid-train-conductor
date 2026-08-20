@@ -493,3 +493,10 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - A dismissible modal now shows on every visit to the homepage announcing the weekly raffle: one Rider Winner and one Organizer Winner, each getting a $5 gift card for participating.
 - **`components/discovery/announcement-popup.tsx`** (new): client component, click-outside or the close button/`Escape`-style close button dismisses it for that page view (it's not persisted — reappears on the next homepage load, per how often it should show).
 - Rendered at the top of **`app/page.tsx`** only, so it never shows on train pages or dashboard routes.
+
+## 36. Weekly Stats Report
+
+- A new cron route, **`app/api/cron/weekly-report/route.ts`**, runs every Sunday (see `vercel.json`, `59 3 * * 1` UTC — approximates 11:59pm America/New_York; drifts by an hour across the DST changeover twice a year) and emails a stats digest for the Monday–Sunday week that just ended.
+- Counts distinct organizers and distinct riders active that week, and how many trains each one organized/rode: organizers = trains with `event_date` in the week and `status != 'cancelled'`, grouped by `organizer_id`; riders = `train_participants` rows on those trains with `confirmation_status = 'confirmed'`, excluding anyone whose `attendance_status` was a cancellation or no-show, grouped by `seller_id`.
+- Sent via the existing `sendEmail()` helper (`lib/email/resend.ts`) to `WEEKLY_REPORT_EMAIL` (defaults to the site owner's address if unset). Same `CRON_SECRET` bearer-auth as `send-reminders`.
+- **Note:** this — like the existing reminder emails — only actually sends once `RESEND_API_KEY` is configured on Vercel. It wasn't set at the time this was built, so reminder emails and this report were both only logging, not delivering, until that's added.

@@ -515,3 +515,11 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **`supabase/migrations/0020_discord_webhook.sql`** (new, applied): adds `discord_webhook_url text` to `raid_trains`. Nullable/optional — trains without one configured behave exactly as before.
 - **`lib/discord/webhook.ts`** (new): dependency-free `fetch`-based wrapper, mirroring `lib/email/resend.ts`'s style. Validates the URL matches Discord's actual webhook URL shape (`https://discord(app).com/api/webhooks/<id>/<token>`) both client-side (`lib/validations/train.ts`) and at send time, so the field can't be pointed at an arbitrary endpoint. Failures are logged and swallowed — a Discord hiccup never blocks the seller/organizer action that triggered it.
 - The webhook URL is never exposed on the public train page: `lib/trains/load-public-train.ts` does `select("*")` server-side, but only specific fields are threaded through to the JSX/client components there, same as the existing `invite_code` field.
+
+
+## 39. Fix Orphaned train_participants Rows On Organizer Removal
+
+- Found while re-testing the Discord signup notification: `train_participants` had INSERT/SELECT/UPDATE RLS policies but no DELETE policy. RLS silently deletes zero rows when no policy matches — no error, no signal — so `removeSellerFromSlot()` (`app/dashboard/organizer/trains/[trainId]/schedule/actions.ts`) has always correctly reopened the slot and withdrawn the application, but left the `train_participants` row behind with `confirmation_status = 'confirmed'`. Confirmed live: after an organizer removed a seller, that seller's own apply page still showed "You're confirmed!" for the now-open slot, blocking them from signing up again.
+- The seller-initiated cancellation path (`cancel_train_participation()`, a `SECURITY DEFINER` function) was never affected — its `DELETE` runs as the table owner and bypasses RLS.
+- **`supabase/migrations/0022_fix_train_participants_delete_policy.sql`** (new, applied): adds `train_participants_delete_organizer`, mirroring the existing `train_participants_update_organizer` policy's condition (`organizes_train(raid_train_id) OR is_admin()`).
+- Checked production for any other rows this had silently orphaned before this fix — none found; this appears to be the first time `removeSellerFromSlot` had actually been exercised.

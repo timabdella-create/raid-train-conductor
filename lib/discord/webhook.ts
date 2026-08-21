@@ -29,23 +29,25 @@ async function postToDiscord(webhookUrl: string, body: Record<string, unknown>):
   }
 }
 
-/** Posted immediately when a confirmed slot frees up (cancellation or organizer removal). sellerName is the Whatnot username of whoever left, e.g. "@EddieBanks" — omitted entirely if we couldn't resolve it. */
+/** Posted immediately when a confirmed slot frees up (cancellation or organizer removal). sellerName is the Whatnot username of whoever left, e.g. "@EddieBanks"; slotTime is the freed slot's local time, e.g. "8:50 PM" — both omitted from the message if we couldn't resolve them. */
 export async function notifyDiscordSlotOpened(input: {
   webhookUrl: string;
   trainName: string;
   trainUrl: string;
   openSlotCount: number;
   sellerName?: string | null;
+  slotTime?: string | null;
 }): Promise<void> {
-  const { webhookUrl, trainName, trainUrl, openSlotCount, sellerName } = input;
-  const who = sellerName ? `**${sellerName}** dropped their slot on` : "A slot just opened up on";
+  const { webhookUrl, trainName, trainUrl, openSlotCount, sellerName, slotTime } = input;
+  const timeSuffix = slotTime ? ` (${slotTime})` : "";
+  const who = sellerName ? `**${sellerName}** dropped their slot${timeSuffix} on` : `A slot${timeSuffix} just opened up on`;
   const content =
     `🚨 ${who} **${trainName}**! ` +
     `${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
   await postToDiscord(webhookUrl, { content });
 }
 
-/** Posted immediately when a seller claims a slot (open/invite_only modes confirm right away; approval_required stays pending until the organizer decides). sellerName is the Whatnot username of whoever signed up, e.g. "@EddieBanks" — omitted entirely if we couldn't resolve it. */
+/** Posted immediately when a seller claims a slot (open/invite_only modes confirm right away; approval_required stays pending until the organizer decides). sellerName is the Whatnot username of whoever signed up, e.g. "@EddieBanks"; slotTime is the claimed slot's local time, e.g. "8:50 PM" — both omitted from the message if we couldn't resolve them. */
 export async function notifyDiscordSlotClaimed(input: {
   webhookUrl: string;
   trainName: string;
@@ -53,12 +55,14 @@ export async function notifyDiscordSlotClaimed(input: {
   openSlotCount: number;
   pending: boolean;
   sellerName?: string | null;
+  slotTime?: string | null;
 }): Promise<void> {
-  const { webhookUrl, trainName, trainUrl, openSlotCount, pending, sellerName } = input;
+  const { webhookUrl, trainName, trainUrl, openSlotCount, pending, sellerName, slotTime } = input;
   const who = sellerName ? `**${sellerName}**` : "A seller";
+  const timeSuffix = slotTime ? ` for the ${slotTime} slot` : "";
   const content = pending
-    ? `📝 ${who} just applied for a slot on **${trainName}** (pending your approval). ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`
-    : `✅ ${who} just claimed a slot on **${trainName}**! ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
+    ? `📝 ${who} just applied${timeSuffix} on **${trainName}** (pending your approval). ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`
+    : `✅ ${who} just claimed${timeSuffix} on **${trainName}**! ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
   await postToDiscord(webhookUrl, { content });
 }
 

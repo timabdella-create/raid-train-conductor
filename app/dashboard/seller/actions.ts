@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendNotification, getUserIdForOrganizer } from "@/lib/notifications/send";
 import { notifyDiscordSlotOpened } from "@/lib/discord/webhook";
+import { formatSlotTime } from "@/lib/trains/generate-slots";
 
 const sellerProfileSchema = z.object({
   whatnotUsername: z.string().trim().min(2, "Enter your Whatnot username.").max(50),
@@ -77,11 +78,31 @@ export async function cancelParticipation(trainId: string) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
+  // Captured before the RPC runs — cancel_train_participation deletes the
+  // train_participants row, so this is our only chance to know which slot
+  // (and thus what time) the seller is dropping.
+  const { data: sellerProfile } = await supabase
+    .from("seller_profiles")
+    .select("id, whatnot_username")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const { data: participantBefore } = sellerProfile
+    ? await supabase
+        .from("train_participants")
+        .select("slot_id")
+        .eq("raid_train_id", trainId)
+        .eq("seller_id", sellerProfile.id)
+        .maybeSingle()
+    : { data: null };
+  const { data: slotBefore } = participantBefore?.slot_id
+    ? await supabase.from("train_slots").select("start_datetime").eq("id", participantBefore.slot_id).maybeSingle()
+    : { data: null };
+
   await supabase.rpc("cancel_train_participation", { p_train_id: trainId });
 
   const { data: train } = await supabase
     .from("raid_trains")
-    .select("name, organizer_id, slug, discord_webhook_url")
+    .select("name, organizer_id, slug, discord_webhook_url, timezone")
     .eq("id", trainId)
     .maybeSingle();
 
@@ -108,14 +129,11 @@ export async function cancelParticipation(trainId: string) {
     }
 
     if (train.discord_webhook_url) {
-      const [{ count }, { data: sellerProfile }] = await Promise.all([
-        supabase
-          .from("train_slots")
-          .select("id", { count: "exact", head: true })
-          .eq("raid_train_id", trainId)
-          .eq("status", "open"),
-        supabase.from("seller_profiles").select("whatnot_username").eq("user_id", user.id).maybeSingle(),
-      ]);
+      const { count } = await supabase
+        .from("train_slots")
+        .select("id", { count: "exact", head: true })
+        .eq("raid_train_id", trainId)
+        .eq("status", "open");
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
       await notifyDiscordSlotOpened({
         webhookUrl: train.discord_webhook_url,
@@ -123,6 +141,7 @@ export async function cancelParticipation(trainId: string) {
         trainUrl: `${siteUrl}/train/${train.slug}`,
         openSlotCount: count ?? 0,
         sellerName: sellerProfile?.whatnot_username ? `@${sellerProfile.whatnot_username}` : null,
+        slotTime: slotBefore?.start_datetime ? formatSlotTime(slotBefore.start_datetime, train.timezone) : null,
       });
     }
   }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { assertCanManageTrain } from "@/lib/trains/access";
 import { sendNotification, getUserIdForSeller } from "@/lib/notifications/send";
 import { notifyDiscordSlotOpened } from "@/lib/discord/webhook";
+import { formatSlotTime } from "@/lib/trains/generate-slots";
 
 function revalidateTrain(trainId: string) {
   revalidatePath(`/dashboard/organizer/trains/${trainId}/schedule`);
@@ -24,7 +25,7 @@ export async function removeSellerFromSlot(trainId: string, slotId: string) {
 
   const { data: slot } = await supabase
     .from("train_slots")
-    .select("id, seller_id, application_id")
+    .select("id, seller_id, application_id, start_datetime")
     .eq("id", slotId)
     .maybeSingle();
   if (!slot || !slot.seller_id) return;
@@ -44,7 +45,7 @@ export async function removeSellerFromSlot(trainId: string, slotId: string) {
 
   const { data: train } = await supabase
     .from("raid_trains")
-    .select("name, organizer_id, slug, discord_webhook_url")
+    .select("name, organizer_id, slug, discord_webhook_url, timezone")
     .eq("id", trainId)
     .single();
 
@@ -92,6 +93,7 @@ export async function removeSellerFromSlot(trainId: string, slotId: string) {
       trainUrl: `${siteUrl}/train/${train.slug}`,
       openSlotCount: count ?? 0,
       sellerName: sellerProfile?.whatnot_username ? `@${sellerProfile.whatnot_username}` : null,
+      slotTime: slot.start_datetime ? formatSlotTime(slot.start_datetime, train.timezone) : null,
     });
   }
 

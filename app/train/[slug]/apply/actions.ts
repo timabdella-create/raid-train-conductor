@@ -133,6 +133,7 @@ export async function submitApplication(
         openSlotCount: count ?? 0,
         pending,
         sellerName: sellerProfile?.whatnot_username ? `@${sellerProfile.whatnot_username}` : null,
+        slotTime: slot ? formatSlotTime(slot.start_datetime, train.timezone) : null,
       });
     }
   }

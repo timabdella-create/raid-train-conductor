@@ -117,11 +117,14 @@ export async function submitApplication(
     });
 
     if (train.discord_webhook_url) {
-      const { count } = await supabase
-        .from("train_slots")
-        .select("id", { count: "exact", head: true })
-        .eq("raid_train_id", train.id)
-        .eq("status", "open");
+      const [{ count }, { data: sellerProfile }] = await Promise.all([
+        supabase
+          .from("train_slots")
+          .select("id", { count: "exact", head: true })
+          .eq("raid_train_id", train.id)
+          .eq("status", "open"),
+        supabase.from("seller_profiles").select("whatnot_username").eq("user_id", user.id).maybeSingle(),
+      ]);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
       await notifyDiscordSlotClaimed({
         webhookUrl: train.discord_webhook_url,
@@ -129,6 +132,7 @@ export async function submitApplication(
         trainUrl: `${siteUrl}/train/${train.slug}`,
         openSlotCount: count ?? 0,
         pending,
+        sellerName: sellerProfile?.whatnot_username ? `@${sellerProfile.whatnot_username}` : null,
       });
     }
   }

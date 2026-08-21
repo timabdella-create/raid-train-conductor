@@ -29,32 +29,36 @@ async function postToDiscord(webhookUrl: string, body: Record<string, unknown>):
   }
 }
 
-/** Posted immediately when a confirmed slot frees up (cancellation or organizer removal). */
+/** Posted immediately when a confirmed slot frees up (cancellation or organizer removal). sellerName is the Whatnot username of whoever left, e.g. "@EddieBanks" — omitted entirely if we couldn't resolve it. */
 export async function notifyDiscordSlotOpened(input: {
   webhookUrl: string;
   trainName: string;
   trainUrl: string;
   openSlotCount: number;
+  sellerName?: string | null;
 }): Promise<void> {
-  const { webhookUrl, trainName, trainUrl, openSlotCount } = input;
+  const { webhookUrl, trainName, trainUrl, openSlotCount, sellerName } = input;
+  const who = sellerName ? `**${sellerName}** dropped their slot on` : "A slot just opened up on";
   const content =
-    `🚨 A slot just opened up on **${trainName}**! ` +
+    `🚨 ${who} **${trainName}**! ` +
     `${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
   await postToDiscord(webhookUrl, { content });
 }
 
-/** Posted immediately when a seller claims a slot (open/invite_only modes confirm right away; approval_required stays pending until the organizer decides). */
+/** Posted immediately when a seller claims a slot (open/invite_only modes confirm right away; approval_required stays pending until the organizer decides). sellerName is the Whatnot username of whoever signed up, e.g. "@EddieBanks" — omitted entirely if we couldn't resolve it. */
 export async function notifyDiscordSlotClaimed(input: {
   webhookUrl: string;
   trainName: string;
   trainUrl: string;
   openSlotCount: number;
   pending: boolean;
+  sellerName?: string | null;
 }): Promise<void> {
-  const { webhookUrl, trainName, trainUrl, openSlotCount, pending } = input;
+  const { webhookUrl, trainName, trainUrl, openSlotCount, pending, sellerName } = input;
+  const who = sellerName ? `**${sellerName}**` : "A seller";
   const content = pending
-    ? `📝 A seller just applied for a slot on **${trainName}** (pending your approval). ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`
-    : `✅ A slot on **${trainName}** just got claimed! ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
+    ? `📝 ${who} just applied for a slot on **${trainName}** (pending your approval). ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`
+    : `✅ ${who} just claimed a slot on **${trainName}**! ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
   await postToDiscord(webhookUrl, { content });
 }
 

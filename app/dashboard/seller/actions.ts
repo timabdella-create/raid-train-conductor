@@ -108,17 +108,21 @@ export async function cancelParticipation(trainId: string) {
     }
 
     if (train.discord_webhook_url) {
-      const { count } = await supabase
-        .from("train_slots")
-        .select("id", { count: "exact", head: true })
-        .eq("raid_train_id", trainId)
-        .eq("status", "open");
+      const [{ count }, { data: sellerProfile }] = await Promise.all([
+        supabase
+          .from("train_slots")
+          .select("id", { count: "exact", head: true })
+          .eq("raid_train_id", trainId)
+          .eq("status", "open"),
+        supabase.from("seller_profiles").select("whatnot_username").eq("user_id", user.id).maybeSingle(),
+      ]);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
       await notifyDiscordSlotOpened({
         webhookUrl: train.discord_webhook_url,
         trainName: train.name,
         trainUrl: `${siteUrl}/train/${train.slug}`,
         openSlotCount: count ?? 0,
+        sellerName: sellerProfile?.whatnot_username ? `@${sellerProfile.whatnot_username}` : null,
       });
     }
   }

@@ -117,6 +117,7 @@ export async function createTrain(
       rules: data.rules || null,
       cancellation_policy: data.cancellationPolicy || null,
       check_in_minutes_before: data.checkInMinutesBefore,
+      discord_webhook_url: data.discordWebhookUrl || null,
       requires_whatnot_profile: data.requiresWhatnotProfile,
       requires_show_link: data.requiresShowLink,
       sales_level_requirement: data.salesLevelRequirement || null,

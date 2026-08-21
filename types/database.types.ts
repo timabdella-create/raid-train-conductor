@@ -102,7 +102,7 @@ export interface Database {
           requires_whatnot_profile: boolean; requires_show_link: boolean;
           sales_level_requirement: string | null; additional_questions: string[];
           invite_code: string | null; cloned_from_id: string | null;
-          seller_thumbnail_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
           published_at: string | null; created_at: string; updated_at: string;
         },
         Partial<{
@@ -113,7 +113,7 @@ export interface Database {
           requires_whatnot_profile: boolean; requires_show_link: boolean;
           sales_level_requirement: string | null; additional_questions: string[];
           invite_code: string | null; cloned_from_id: string | null; published_at: string | null;
-          seller_thumbnail_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
         }> & {
           organizer_id: string; name: string; slug: string; event_date: string;
           start_time: string; end_time: string; slot_duration_minutes: number;
@@ -127,7 +127,7 @@ export interface Database {
           check_in_minutes_before: number; requires_whatnot_profile: boolean;
           requires_show_link: boolean; sales_level_requirement: string | null;
           additional_questions: string[]; invite_code: string | null; published_at: string | null;
-          seller_thumbnail_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
         }>
       >;
       train_slots: Table<

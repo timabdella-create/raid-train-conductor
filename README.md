@@ -505,3 +505,12 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 
 - The "Organized by X · N trains hosted" line on the public train page now also shows "· N trains ridden" — the organizer's own count of completed trains as a seller elsewhere, covering the common case of someone who both runs trains and rides on others'.
 - **`supabase/migrations/0019_organizer_rider_count.sql`** (new, applied): `get_organizer_rider_count(p_organizer_id)` joins the organizer's `organizer_profiles.user_id` to any matching `seller_profiles` row and counts their completed `train_participants`, returning 0 if they've never ridden as a seller.
+
+## 38. Discord Webhook Integration
+
+- Organizers can now paste a Discord webhook URL into a train's Rules step (wizard step 5). Two things fire off it:
+  1. **Live "slot opened" post** — whenever a confirmed seller drops their slot (seller-initiated cancellation via `cancelParticipation` in `app/dashboard/seller/actions.ts`, or organizer removal via `removeSellerFromSlot` in `app/dashboard/organizer/trains/[trainId]/schedule/actions.ts`), a message posts immediately with the train name, current open-slot count, and a link.
+  2. **Daily 8am ET roundup** — a new cron route, **`app/api/cron/discord-daily-summary/route.ts`** (see `vercel.json`, `0 12 * * *` UTC — approximates 8am America/New_York; drifts an hour across the DST changeover twice a year, same caveat as the weekly report), posts every published/live train's remaining open slot times, for every train with a webhook configured whose event date hasn't passed yet.
+- **`supabase/migrations/0020_discord_webhook.sql`** (new, applied): adds `discord_webhook_url text` to `raid_trains`. Nullable/optional — trains without one configured behave exactly as before.
+- **`lib/discord/webhook.ts`** (new): dependency-free `fetch`-based wrapper, mirroring `lib/email/resend.ts`'s style. Validates the URL matches Discord's actual webhook URL shape (`https://discord(app).com/api/webhooks/<id>/<token>`) both client-side (`lib/validations/train.ts`) and at send time, so the field can't be pointed at an arbitrary endpoint. Failures are logged and swallowed — a Discord hiccup never blocks the seller/organizer action that triggered it.
+- The webhook URL is never exposed on the public train page: `lib/trains/load-public-train.ts` does `select("*")` server-side, but only specific fields are threaded through to the JSX/client components there, same as the existing `invite_code` field.

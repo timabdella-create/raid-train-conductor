@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { assertCanManageTrain } from "@/lib/trains/access";
 import { sendNotification, getUserIdForSeller } from "@/lib/notifications/send";
+import { notifyDiscordSlotOpened } from "@/lib/discord/webhook";
 
 function revalidateTrain(trainId: string) {
   revalidatePath(`/dashboard/organizer/trains/${trainId}/schedule`);
@@ -43,7 +44,7 @@ export async function removeSellerFromSlot(trainId: string, slotId: string) {
 
   const { data: train } = await supabase
     .from("raid_trains")
-    .select("name, organizer_id")
+    .select("name, organizer_id, slug, discord_webhook_url")
     .eq("id", trainId)
     .single();
 
@@ -74,6 +75,21 @@ export async function removeSellerFromSlot(trainId: string, slotId: string) {
     action_type: "seller_removed_by_organizer",
     action_details: { slot_id: slotId, seller_id: sellerId },
   });
+
+  if (train?.discord_webhook_url) {
+    const { count } = await supabase
+      .from("train_slots")
+      .select("id", { count: "exact", head: true })
+      .eq("raid_train_id", trainId)
+      .eq("status", "open");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+    await notifyDiscordSlotOpened({
+      webhookUrl: train.discord_webhook_url,
+      trainName: train.name,
+      trainUrl: `${siteUrl}/train/${train.slug}`,
+      openSlotCount: count ?? 0,
+    });
+  }
 
   revalidateTrain(trainId);
 }

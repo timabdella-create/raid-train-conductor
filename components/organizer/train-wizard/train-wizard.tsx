@@ -40,6 +40,7 @@ export interface WizardData {
   rules: string;
   cancellationPolicy: string;
   checkInMinutesBefore: string;
+  discordWebhookUrl: string;
 }
 
 export const EMPTY_WIZARD_DATA: WizardData = {
@@ -66,6 +67,7 @@ export const EMPTY_WIZARD_DATA: WizardData = {
   rules: "",
   cancellationPolicy: "",
   checkInMinutesBefore: "120",
+  discordWebhookUrl: "",
 };
 
 type FormState = { error?: string; fieldErrors?: Record<string, string> };
@@ -193,7 +195,7 @@ export function TrainWizard({
         />
         <SignupSettingsStep data={data} update={update} errors={combinedErrors} visible={step === 3} />
         <RequirementsStep data={data} update={update} visible={step === 4} />
-        <RulesStep data={data} update={update} visible={step === 5} />
+        <RulesStep data={data} update={update} errors={combinedErrors} visible={step === 5} />
         <ReviewStep data={data} visible={step === 6} />
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">

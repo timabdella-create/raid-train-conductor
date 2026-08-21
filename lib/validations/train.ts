@@ -100,10 +100,18 @@ export type RequirementsInput = z.infer<typeof requirementsSchema>;
 // ---------------------------------------------------------------------------
 // Step 5 — Rules
 // ---------------------------------------------------------------------------
+export const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+\/?$/;
+
 export const rulesSchema = z.object({
   rules: z.string().trim().max(5000).optional().or(z.literal("")),
   cancellationPolicy: z.string().trim().max(5000).optional().or(z.literal("")),
   checkInMinutesBefore: z.coerce.number().int().min(0).max(10080).default(120),
+  discordWebhookUrl: z
+    .string()
+    .trim()
+    .regex(DISCORD_WEBHOOK_URL_PATTERN, "Enter a Discord webhook URL, e.g. https://discord.com/api/webhooks/123/abc")
+    .optional()
+    .or(z.literal("")),
 });
 export type RulesInput = z.infer<typeof rulesSchema>;
 

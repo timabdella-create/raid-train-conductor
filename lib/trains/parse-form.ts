@@ -26,6 +26,7 @@ export function parseTrainFormData(formData: FormData) {
     rules: formData.get("rules"),
     cancellationPolicy: formData.get("cancellationPolicy"),
     checkInMinutesBefore: formData.get("checkInMinutesBefore"),
+    discordWebhookUrl: formData.get("discordWebhookUrl"),
     action: formData.get("action"),
   };
 }

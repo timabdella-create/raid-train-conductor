@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendNotification, getUserIdForOrganizer } from "@/lib/notifications/send";
+import { notifyDiscordSlotOpened } from "@/lib/discord/webhook";
 
 const sellerProfileSchema = z.object({
   whatnotUsername: z.string().trim().min(2, "Enter your Whatnot username.").max(50),
@@ -80,7 +81,7 @@ export async function cancelParticipation(trainId: string) {
 
   const { data: train } = await supabase
     .from("raid_trains")
-    .select("name, organizer_id")
+    .select("name, organizer_id, slug, discord_webhook_url")
     .eq("id", trainId)
     .maybeSingle();
 
@@ -103,6 +104,21 @@ export async function cancelParticipation(trainId: string) {
           subject: `A seller cancelled on ${train.name}`,
           message: "One of your confirmed sellers just cancelled their slot. It's back to open — check the schedule manager to fill it or offer it to your waitlist.",
         },
+      });
+    }
+
+    if (train.discord_webhook_url) {
+      const { count } = await supabase
+        .from("train_slots")
+        .select("id", { count: "exact", head: true })
+        .eq("raid_train_id", trainId)
+        .eq("status", "open");
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+      await notifyDiscordSlotOpened({
+        webhookUrl: train.discord_webhook_url,
+        trainName: train.name,
+        trainUrl: `${siteUrl}/train/${train.slug}`,
+        openSlotCount: count ?? 0,
       });
     }
   }

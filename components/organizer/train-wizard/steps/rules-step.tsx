@@ -2,6 +2,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { CHECK_IN_PRESETS } from "@/lib/validations/train";
 import type { WizardData } from "../train-wizard";
 
@@ -9,9 +10,10 @@ interface Props {
   data: WizardData;
   update: (patch: Partial<WizardData>) => void;
   visible: boolean;
+  errors?: Record<string, string>;
 }
 
-export function RulesStep({ data, update, visible }: Props) {
+export function RulesStep({ data, update, visible, errors = {} }: Props) {
   return (
     <div className={visible ? "space-y-4" : "hidden"}>
       <div>
@@ -57,6 +59,25 @@ export function RulesStep({ data, update, visible }: Props) {
           ))}
         </div>
       </fieldset>
+
+      <div>
+        <Label htmlFor="discordWebhookUrl">Discord webhook URL (optional)</Label>
+        <Input
+          id="discordWebhookUrl"
+          name="discordWebhookUrl"
+          value={data.discordWebhookUrl}
+          onChange={(e) => update({ discordWebhookUrl: e.target.value })}
+          placeholder="https://discord.com/api/webhooks/..."
+        />
+        {errors.discordWebhookUrl && (
+          <p className="mt-1 text-sm text-destructive">{errors.discordWebhookUrl}</p>
+        )}
+        <p className="mt-1 text-sm text-muted-foreground">
+          Paste a webhook URL from your Discord server (Channel Settings → Integrations → Webhooks) and
+          we&apos;ll post there whenever a confirmed slot opens back up, plus a daily 8am ET roundup of
+          what&apos;s still open.
+        </p>
+      </div>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export async function saveSellerProfile(
   return {};
 }
 
-export async function cancelParticipation(trainId: string) {
+export async function cancelParticipation(trainId: string): Promise<{ error?: string } | void> {
   const supabase = createClient();
   const {
     data: { user },
@@ -98,7 +98,15 @@ export async function cancelParticipation(trainId: string) {
     ? await supabase.from("train_slots").select("start_datetime").eq("id", participantBefore.slot_id).maybeSingle()
     : { data: null };
 
-  await supabase.rpc("cancel_train_participation", { p_train_id: trainId });
+  const { error: cancelError } = await supabase.rpc("cancel_train_participation", {
+    p_train_id: trainId,
+  });
+  if (cancelError) {
+    // Bail out before sending any "you're cancelled" notifications or
+    // posting to Discord — the slot/application/participant rows were not
+    // actually changed if the RPC failed.
+    return { error: cancelError.message };
+  }
 
   const { data: train } = await supabase
     .from("raid_trains")

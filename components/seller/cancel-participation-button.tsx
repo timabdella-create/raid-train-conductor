@@ -8,14 +8,17 @@ export function CancelParticipationButton({
   action,
 }: {
   trainName: string;
-  action: () => Promise<void>;
+  action: () => Promise<{ error?: string } | void>;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
     if (!confirm(`Cancel your slot on "${trainName}"? This can't be undone.`)) return;
-    startTransition(() => {
-      action();
+    startTransition(async () => {
+      const result = await action();
+      if (result?.error) {
+        alert(`Couldn't cancel your slot: ${result.error}`);
+      }
     });
   }
 

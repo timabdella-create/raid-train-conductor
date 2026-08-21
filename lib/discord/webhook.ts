@@ -43,6 +43,21 @@ export async function notifyDiscordSlotOpened(input: {
   await postToDiscord(webhookUrl, { content });
 }
 
+/** Posted immediately when a seller claims a slot (open/invite_only modes confirm right away; approval_required stays pending until the organizer decides). */
+export async function notifyDiscordSlotClaimed(input: {
+  webhookUrl: string;
+  trainName: string;
+  trainUrl: string;
+  openSlotCount: number;
+  pending: boolean;
+}): Promise<void> {
+  const { webhookUrl, trainName, trainUrl, openSlotCount, pending } = input;
+  const content = pending
+    ? `📝 A seller just applied for a slot on **${trainName}** (pending your approval). ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`
+    : `✅ A slot on **${trainName}** just got claimed! ${openSlotCount} open slot${openSlotCount === 1 ? "" : "s"} left — ${trainUrl}`;
+  await postToDiscord(webhookUrl, { content });
+}
+
 /** Posted once daily (see app/api/cron/discord-daily-summary) listing the slots still open. */
 export async function notifyDiscordOpenSlotsSummary(input: {
   webhookUrl: string;

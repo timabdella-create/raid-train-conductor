@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildApplicationSchema, waitlistJoinSchema } from "@/lib/validations/application";
 import { sendNotification } from "@/lib/notifications/send";
 import { formatSlotTime } from "@/lib/trains/generate-slots";
+import { notifyDiscordSlotClaimed } from "@/lib/discord/webhook";
 
 function applyPath(slug: string, code?: string, extra?: Record<string, string>) {
   const params = new URLSearchParams();
@@ -92,7 +93,7 @@ export async function submitApplication(
 
   const { data: train } = await supabase
     .from("raid_trains")
-    .select("id, name, timezone")
+    .select("id, name, timezone, slug, discord_webhook_url")
     .eq("slug", slug)
     .maybeSingle();
   const { data: slot } = await supabase
@@ -102,16 +103,34 @@ export async function submitApplication(
     .maybeSingle();
 
   if (train) {
+    const pending = application?.status === "pending";
+
     await sendNotification({
       userId: user.id,
       raidTrainId: train.id,
       type: "signup_confirmation",
       data: {
         trainName: train.name,
-        pending: application?.status === "pending",
+        pending,
         slotTime: slot ? formatSlotTime(slot.start_datetime, train.timezone) : undefined,
       },
     });
+
+    if (train.discord_webhook_url) {
+      const { count } = await supabase
+        .from("train_slots")
+        .select("id", { count: "exact", head: true })
+        .eq("raid_train_id", train.id)
+        .eq("status", "open");
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+      await notifyDiscordSlotClaimed({
+        webhookUrl: train.discord_webhook_url,
+        trainName: train.name,
+        trainUrl: `${siteUrl}/train/${train.slug}`,
+        openSlotCount: count ?? 0,
+        pending,
+      });
+    }
   }
 
   redirect(`/dashboard/seller/applications?applied=${slug}`);

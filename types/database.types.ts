@@ -67,17 +67,29 @@ export interface Database {
       seller_profiles: Table<
         {
           id: string; user_id: string; whatnot_username: string; whatnot_profile_url: string;
-          shop_logo_url: string | null; group_icon_url: string | null; seller_category: string | null;
+          shop_logo_url: string | null; group_id: string | null; seller_category: string | null;
           sales_level: string | null; created_at: string; updated_at: string;
         },
         {
           user_id: string; whatnot_username: string; whatnot_profile_url: string;
-          shop_logo_url?: string | null; group_icon_url?: string | null; seller_category?: string | null;
+          shop_logo_url?: string | null; group_id?: string | null; seller_category?: string | null;
           sales_level?: string | null;
         },
         Partial<{
           whatnot_username: string; whatnot_profile_url: string; shop_logo_url: string | null;
-          group_icon_url: string | null; seller_category: string | null; sales_level: string | null;
+          group_id: string | null; seller_category: string | null; sales_level: string | null;
+        }>
+      >;
+      seller_groups: Table<
+        {
+          id: string; name: string; icon_url: string; created_by: string;
+          created_at: string; updated_at: string;
+        },
+        {
+          name: string; icon_url: string; created_by: string;
+        },
+        Partial<{
+          name: string; icon_url: string;
         }>
       >;
       organizer_profiles: Table<
@@ -352,6 +364,10 @@ export interface Database {
       invite_co_conductor: Fn<{ p_raid_train_id: string; p_to_email: string }, string>;
       respond_to_co_conductor_invite: Fn<{ p_invite_id: string; p_accept: boolean }, undefined>;
       remove_co_conductor: Fn<{ p_id: string }, undefined>;
+      get_group_members: Fn<
+        { p_group_id: string },
+        { seller_id: string; whatnot_username: string; whatnot_profile_url: string }[]
+      >;
     };
   };
 }

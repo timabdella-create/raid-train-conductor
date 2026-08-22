@@ -15,7 +15,10 @@ const sellerProfileSchema = z.object({
     .url("Enter a full URL, e.g. https://www.whatnot.com/user/yourname")
     .refine((url) => url.startsWith("https://"), "Profile URL must use https://"),
   sellerCategory: z.string().trim().max(50).optional().or(z.literal("")),
-  groupIconUrl: z.string().trim().url().optional().or(z.literal("")),
+  groupMode: z.enum(["none", "existing", "new"]).default("none"),
+  existingGroupId: z.string().uuid().optional().or(z.literal("")),
+  newGroupName: z.string().trim().min(2, "Give the group a name.").max(60).optional().or(z.literal("")),
+  newGroupIconUrl: z.string().trim().url().optional().or(z.literal("")),
 });
 
 export type SellerProfileFormState = {
@@ -43,7 +46,10 @@ export async function saveSellerProfile(
     whatnotUsername: formData.get("whatnotUsername"),
     whatnotProfileUrl: formData.get("whatnotProfileUrl"),
     sellerCategory: formData.get("sellerCategory"),
-    groupIconUrl: formData.get("groupIconUrl"),
+    groupMode: formData.get("groupMode") || "none",
+    existingGroupId: formData.get("existingGroupId"),
+    newGroupName: formData.get("newGroupName"),
+    newGroupIconUrl: formData.get("newGroupIconUrl"),
   });
 
   if (!parsed.success) {
@@ -54,13 +60,42 @@ export async function saveSellerProfile(
     return { fieldErrors };
   }
 
+  let groupId: string | null = null;
+
+  if (parsed.data.groupMode === "existing") {
+    if (!parsed.data.existingGroupId) {
+      return { error: "Choose a group, or switch back to \"No group\"." };
+    }
+    groupId = parsed.data.existingGroupId;
+  } else if (parsed.data.groupMode === "new") {
+    if (!parsed.data.newGroupName) {
+      return { fieldErrors: { newGroupName: "Give the group a name." } };
+    }
+    if (!parsed.data.newGroupIconUrl) {
+      return { fieldErrors: { newGroupIconUrl: "Upload an icon for the group." } };
+    }
+    const { data: newGroup, error: groupError } = await supabase
+      .from("seller_groups")
+      .insert({
+        name: parsed.data.newGroupName,
+        icon_url: parsed.data.newGroupIconUrl,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (groupError || !newGroup) {
+      return { error: groupError?.message ?? "Couldn't create that group." };
+    }
+    groupId = newGroup.id;
+  }
+
   const { error } = await supabase.from("seller_profiles").upsert(
     {
       user_id: user.id,
       whatnot_username: parsed.data.whatnotUsername,
       whatnot_profile_url: parsed.data.whatnotProfileUrl,
       seller_category: parsed.data.sellerCategory || null,
-      group_icon_url: parsed.data.groupIconUrl || null,
+      group_id: groupId,
     },
     { onConflict: "user_id" }
   );

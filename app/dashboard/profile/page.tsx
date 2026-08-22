@@ -14,23 +14,27 @@ export default async function EditProfilePage() {
 
   if (!user) redirect("/login");
 
-  const [{ data: profile }, { data: organizerProfile }, { data: sellerProfile }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("display_name, phone, bio, timezone")
-      .eq("user_id", user.id)
-      .single(),
-    supabase
-      .from("organizer_profiles")
-      .select("organizer_name, whatnot_username, contact_email")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("seller_profiles")
-      .select("whatnot_username, whatnot_profile_url, seller_category, group_icon_url")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-  ]);
+  const [{ data: profile }, { data: organizerProfile }, { data: sellerProfile }, { data: groupRows }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("display_name, phone, bio, timezone")
+        .eq("user_id", user.id)
+        .single(),
+      supabase
+        .from("organizer_profiles")
+        .select("organizer_name, whatnot_username, contact_email")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("seller_profiles")
+        .select("whatnot_username, whatnot_profile_url, seller_category, group_id")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase.from("seller_groups").select("id, name, icon_url").order("name"),
+    ]);
+
+  const groups = (groupRows ?? []).map((g) => ({ id: g.id, name: g.name, iconUrl: g.icon_url }));
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -97,8 +101,9 @@ export default async function EditProfilePage() {
               whatnotUsername: sellerProfile.whatnot_username,
               whatnotProfileUrl: sellerProfile.whatnot_profile_url,
               sellerCategory: sellerProfile.seller_category,
-              groupIconUrl: sellerProfile.group_icon_url,
+              groupId: sellerProfile.group_id,
             }}
+            groups={groups}
           />
         ) : (
           <Link href="/dashboard/seller" className="text-sm font-medium text-primary hover:underline">

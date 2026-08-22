@@ -27,6 +27,8 @@ export default async function SellerDashboardPage() {
     .maybeSingle();
 
   if (!sellerProfile) {
+    const { data: groupRows } = await supabase.from("seller_groups").select("id, name, icon_url").order("name");
+    const groups = (groupRows ?? []).map((g) => ({ id: g.id, name: g.name, iconUrl: g.icon_url }));
     return (
       <div className="mx-auto max-w-md">
         <Card>
@@ -36,7 +38,7 @@ export default async function SellerDashboardPage() {
               Organizers need your Whatnot info to confirm you for a slot.
             </CardDescription>
           </CardHeader>
-          <SellerProfileForm />
+          <SellerProfileForm groups={groups} />
         </Card>
       </div>
     );

@@ -22,7 +22,11 @@ export interface ScheduleSlot {
   startDatetime: string;
   endDatetime: string;
   status: SlotStatus;
-  seller: { displayName: string; whatnotUsername: string; groupIconUrl: string | null } | null;
+  seller: {
+    displayName: string;
+    whatnotUsername: string;
+    group: { id: string; name: string; iconUrl: string } | null;
+  } | null;
   checkedIn: boolean;
   checkInOpen: boolean;
 }
@@ -42,7 +46,7 @@ function DraggableSellerCard({
   seller,
 }: {
   slotId: string;
-  seller: { displayName: string; whatnotUsername: string; groupIconUrl: string | null };
+  seller: { displayName: string; whatnotUsername: string; group: { id: string; name: string; iconUrl: string } | null };
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: slotId });
 
@@ -60,14 +64,26 @@ function DraggableSellerCard({
       }`}
     >
       <div className="flex items-center gap-2">
-        {seller.groupIconUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={seller.groupIconUrl}
-            alt=""
-            title="Group/community icon"
-            className="h-14 w-14 shrink-0 rounded-full border border-border object-cover"
-          />
+        {seller.group && (
+          // Stops the pointerdown/click from reaching the drag handlers spread
+          // on the parent div above, so this opens the group roster instead of
+          // starting a drag gesture.
+          <a
+            href={`/groups/${seller.group.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${seller.group.name} \u2014 see everyone in this group`}
+            className="shrink-0"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={seller.group.iconUrl}
+              alt={seller.group.name}
+              className="h-14 w-14 rounded-full border border-border object-cover"
+            />
+          </a>
         )}
         <p className="font-medium">{seller.displayName}</p>
       </div>

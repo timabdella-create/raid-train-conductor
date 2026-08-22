@@ -37,23 +37,29 @@ export default async function ScheduleManagerPage({ params }: { params: { trainI
   const sellerIds = [...new Set((slots ?? []).map((s) => s.seller_id).filter((id): id is string => Boolean(id)))];
   const { data: sellerProfiles } =
     sellerIds.length > 0
-      ? await supabase.from("seller_profiles").select("id, user_id, whatnot_username, group_icon_url").in("id", sellerIds)
-      : { data: [] as { id: string; user_id: string; whatnot_username: string; group_icon_url: string | null }[] };
+      ? await supabase.from("seller_profiles").select("id, user_id, whatnot_username, group_id").in("id", sellerIds)
+      : { data: [] as { id: string; user_id: string; whatnot_username: string; group_id: string | null }[] };
 
   const sellerUserIds = (sellerProfiles ?? []).map((s) => s.user_id);
-  const { data: displayProfiles } =
+  const groupIds = [...new Set((sellerProfiles ?? []).map((s) => s.group_id).filter((id): id is string => Boolean(id)))];
+  const [{ data: displayProfiles }, { data: groupRows }] = await Promise.all([
     sellerUserIds.length > 0
-      ? await supabase.from("profiles").select("user_id, display_name").in("user_id", sellerUserIds)
-      : { data: [] as { user_id: string; display_name: string }[] };
+      ? supabase.from("profiles").select("user_id, display_name").in("user_id", sellerUserIds)
+      : Promise.resolve({ data: [] as { user_id: string; display_name: string }[] }),
+    groupIds.length > 0
+      ? supabase.from("seller_groups").select("id, name, icon_url").in("id", groupIds)
+      : Promise.resolve({ data: [] as { id: string; name: string; icon_url: string }[] }),
+  ]);
 
   const displayNameByUserId = new Map((displayProfiles ?? []).map((p) => [p.user_id, p.display_name]));
+  const groupById = new Map((groupRows ?? []).map((g) => [g.id, { id: g.id, name: g.name, iconUrl: g.icon_url }]));
   const sellerInfoById = new Map(
     (sellerProfiles ?? []).map((s) => [
       s.id,
       {
         whatnotUsername: s.whatnot_username,
         displayName: displayNameByUserId.get(s.user_id) ?? "Seller",
-        groupIconUrl: s.group_icon_url,
+        group: s.group_id ? (groupById.get(s.group_id) ?? null) : null,
       },
     ])
   );

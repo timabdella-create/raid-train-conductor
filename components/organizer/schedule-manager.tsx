@@ -59,14 +59,14 @@ function DraggableSellerCard({
         isDragging ? "z-10 opacity-70 shadow-lg" : ""
       }`}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         {seller.groupIconUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={seller.groupIconUrl}
             alt=""
             title="Group/community icon"
-            className="h-4 w-4 shrink-0 rounded-full border border-border object-cover"
+            className="h-8 w-8 shrink-0 rounded-full border border-border object-cover"
           />
         )}
         <p className="font-medium">{seller.displayName}</p>

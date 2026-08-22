@@ -279,14 +279,14 @@ export default async function PublicTrainPage({
                     </td>
                     <td className="px-4 py-2">
                       {seller ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
                           {seller.group_icon_url && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={seller.group_icon_url}
                               alt=""
                               title="Group/community icon"
-                              className="h-5 w-5 shrink-0 rounded-full border border-border object-cover"
+                              className="h-9 w-9 shrink-0 rounded-full border border-border object-cover"
                             />
                           )}
                           <a

@@ -286,7 +286,7 @@ export default async function PublicTrainPage({
                               src={seller.group_icon_url}
                               alt=""
                               title="Group/community icon"
-                              className="h-9 w-9 shrink-0 rounded-full border border-border object-cover"
+                              className="h-[47px] w-[47px] shrink-0 rounded-full border border-border object-cover"
                             />
                           )}
                           <a

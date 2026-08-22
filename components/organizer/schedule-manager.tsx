@@ -66,7 +66,7 @@ function DraggableSellerCard({
             src={seller.groupIconUrl}
             alt=""
             title="Group/community icon"
-            className="h-[42px] w-[42px] shrink-0 rounded-full border border-border object-cover"
+            className="h-14 w-14 shrink-0 rounded-full border border-border object-cover"
           />
         )}
         <p className="font-medium">{seller.displayName}</p>

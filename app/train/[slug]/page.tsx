@@ -16,7 +16,7 @@ import type { Database } from "@/types/database.types";
 
 type RaidTrainRow = Database["public"]["Tables"]["raid_trains"]["Row"];
 type TrainSlotRow = Database["public"]["Tables"]["train_slots"]["Row"];
-type SellerInfo = { whatnot_username: string; whatnot_profile_url: string; completedTrains: number };
+type SellerInfo = { whatnot_username: string; whatnot_profile_url: string; completedTrains: number; group_icon_url: string | null };
 
 function findLiveAndNextSlot(slots: TrainSlotRow[]) {
   const now = Date.now();
@@ -63,7 +63,7 @@ export default async function PublicTrainPage({
 
   if (sellerIds.length > 0) {
     const [{ data: sellerRows }, { data: sellerCounts }] = await Promise.all([
-      supabase.from("seller_profiles").select("id, whatnot_username, whatnot_profile_url").in("id", sellerIds),
+      supabase.from("seller_profiles").select("id, whatnot_username, whatnot_profile_url, group_icon_url").in("id", sellerIds),
       supabase.rpc("get_seller_completed_counts", { p_seller_ids: sellerIds }),
     ]);
     const countBySellerId = new Map((sellerCounts ?? []).map((c) => [c.seller_id, c.completed_trains]));
@@ -72,6 +72,7 @@ export default async function PublicTrainPage({
         whatnot_username: row.whatnot_username,
         whatnot_profile_url: row.whatnot_profile_url,
         completedTrains: countBySellerId.get(row.id) ?? 0,
+        group_icon_url: row.group_icon_url,
       });
     }
   }
@@ -279,6 +280,15 @@ export default async function PublicTrainPage({
                     <td className="px-4 py-2">
                       {seller ? (
                         <div className="flex items-center gap-1.5">
+                          {seller.group_icon_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={seller.group_icon_url}
+                              alt=""
+                              title="Group/community icon"
+                              className="h-5 w-5 shrink-0 rounded-full border border-border object-cover"
+                            />
+                          )}
                           <a
                             href={seller.whatnot_profile_url}
                             target="_blank"

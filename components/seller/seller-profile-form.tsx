@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { saveSellerProfile, type SellerProfileFormState } from "@/app/dashboard/seller/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { ImageUploadField } from "@/components/organizer/image-upload-field";
 
 const initialState: SellerProfileFormState = {};
 
@@ -24,9 +26,11 @@ export function SellerProfileForm({
     whatnotUsername: string;
     whatnotProfileUrl: string;
     sellerCategory: string | null;
+    groupIconUrl: string | null;
   };
 }) {
   const [state, formAction] = useFormState(saveSellerProfile, initialState);
+  const [groupIconUrl, setGroupIconUrl] = useState(defaultValues?.groupIconUrl ?? "");
   const isEditing = !!defaultValues;
 
   return (
@@ -75,6 +79,15 @@ export function SellerProfileForm({
           defaultValue={defaultValues?.sellerCategory ?? undefined}
         />
       </div>
+
+      <input type="hidden" name="groupIconUrl" value={groupIconUrl} />
+      <ImageUploadField
+        id="groupIconUrl"
+        value={groupIconUrl}
+        onChange={setGroupIconUrl}
+        label="Group/community icon (optional)"
+        helpText="Shows next to your name in the schedule table on any train you're signed up for — a logo for a raid group, community, or team you're part of."
+      />
 
       <SubmitButton label={isEditing ? "Save changes" : "Save seller profile"} />
     </form>

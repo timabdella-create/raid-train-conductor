@@ -22,7 +22,7 @@ export interface ScheduleSlot {
   startDatetime: string;
   endDatetime: string;
   status: SlotStatus;
-  seller: { displayName: string; whatnotUsername: string } | null;
+  seller: { displayName: string; whatnotUsername: string; groupIconUrl: string | null } | null;
   checkedIn: boolean;
   checkInOpen: boolean;
 }
@@ -37,7 +37,13 @@ interface Props {
   onUndoCheckIn: (slotId: string) => Promise<void>;
 }
 
-function DraggableSellerCard({ slotId, seller }: { slotId: string; seller: { displayName: string; whatnotUsername: string } }) {
+function DraggableSellerCard({
+  slotId,
+  seller,
+}: {
+  slotId: string;
+  seller: { displayName: string; whatnotUsername: string; groupIconUrl: string | null };
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: slotId });
 
   return (
@@ -53,7 +59,18 @@ function DraggableSellerCard({ slotId, seller }: { slotId: string; seller: { dis
         isDragging ? "z-10 opacity-70 shadow-lg" : ""
       }`}
     >
-      <p className="font-medium">{seller.displayName}</p>
+      <div className="flex items-center gap-1.5">
+        {seller.groupIconUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={seller.groupIconUrl}
+            alt=""
+            title="Group/community icon"
+            className="h-4 w-4 shrink-0 rounded-full border border-border object-cover"
+          />
+        )}
+        <p className="font-medium">{seller.displayName}</p>
+      </div>
       <p className="text-xs text-muted-foreground">@{seller.whatnotUsername}</p>
     </div>
   );

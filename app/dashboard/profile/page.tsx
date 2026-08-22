@@ -27,7 +27,7 @@ export default async function EditProfilePage() {
       .maybeSingle(),
     supabase
       .from("seller_profiles")
-      .select("whatnot_username, whatnot_profile_url, seller_category")
+      .select("whatnot_username, whatnot_profile_url, seller_category, group_icon_url")
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
@@ -97,6 +97,7 @@ export default async function EditProfilePage() {
               whatnotUsername: sellerProfile.whatnot_username,
               whatnotProfileUrl: sellerProfile.whatnot_profile_url,
               sellerCategory: sellerProfile.seller_category,
+              groupIconUrl: sellerProfile.group_icon_url,
             }}
           />
         ) : (

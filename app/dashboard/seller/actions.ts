@@ -15,6 +15,7 @@ const sellerProfileSchema = z.object({
     .url("Enter a full URL, e.g. https://www.whatnot.com/user/yourname")
     .refine((url) => url.startsWith("https://"), "Profile URL must use https://"),
   sellerCategory: z.string().trim().max(50).optional().or(z.literal("")),
+  groupIconUrl: z.string().trim().url().optional().or(z.literal("")),
 });
 
 export type SellerProfileFormState = {
@@ -42,6 +43,7 @@ export async function saveSellerProfile(
     whatnotUsername: formData.get("whatnotUsername"),
     whatnotProfileUrl: formData.get("whatnotProfileUrl"),
     sellerCategory: formData.get("sellerCategory"),
+    groupIconUrl: formData.get("groupIconUrl"),
   });
 
   if (!parsed.success) {
@@ -58,6 +60,7 @@ export async function saveSellerProfile(
       whatnot_username: parsed.data.whatnotUsername,
       whatnot_profile_url: parsed.data.whatnotProfileUrl,
       seller_category: parsed.data.sellerCategory || null,
+      group_icon_url: parsed.data.groupIconUrl || null,
     },
     { onConflict: "user_id" }
   );

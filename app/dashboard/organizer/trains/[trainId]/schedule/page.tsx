@@ -37,8 +37,8 @@ export default async function ScheduleManagerPage({ params }: { params: { trainI
   const sellerIds = [...new Set((slots ?? []).map((s) => s.seller_id).filter((id): id is string => Boolean(id)))];
   const { data: sellerProfiles } =
     sellerIds.length > 0
-      ? await supabase.from("seller_profiles").select("id, user_id, whatnot_username").in("id", sellerIds)
-      : { data: [] as { id: string; user_id: string; whatnot_username: string }[] };
+      ? await supabase.from("seller_profiles").select("id, user_id, whatnot_username, group_icon_url").in("id", sellerIds)
+      : { data: [] as { id: string; user_id: string; whatnot_username: string; group_icon_url: string | null }[] };
 
   const sellerUserIds = (sellerProfiles ?? []).map((s) => s.user_id);
   const { data: displayProfiles } =
@@ -50,7 +50,11 @@ export default async function ScheduleManagerPage({ params }: { params: { trainI
   const sellerInfoById = new Map(
     (sellerProfiles ?? []).map((s) => [
       s.id,
-      { whatnotUsername: s.whatnot_username, displayName: displayNameByUserId.get(s.user_id) ?? "Seller" },
+      {
+        whatnotUsername: s.whatnot_username,
+        displayName: displayNameByUserId.get(s.user_id) ?? "Seller",
+        groupIconUrl: s.group_icon_url,
+      },
     ])
   );
 

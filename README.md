@@ -531,3 +531,13 @@ Each phase after this one will ship as its own stage: an explanation of what's b
 - **`supabase/migrations/0024_fix_cancel_participation_enum_cast.sql`** (new, applied): adds an explicit `::attendance_status` cast to the `CASE` expression.
 - **`app/dashboard/seller/actions.ts`**: `cancelParticipation` now checks the RPC's `error` and returns `{ error }` instead of continuing, so a failed cancellation never fires notifications or Discord posts. **`components/seller/cancel-participation-button.tsx`** surfaces that error via `alert()`.
 - Confirmed live: a seller's in-progress cancellation had silently failed this way; applied the fix and re-ran the same cancellation directly against the database to actually release their held slot, since they'd already confirmed the browser dialog once.
+
+## 41. Seller Group/Community Icon
+
+- Sellers can now upload a small badge/logo (e.g. a Discord community or raid-group logo) on their seller profile, shown next to their name in the schedule table on any train they're signed up for.
+- **`supabase/migrations/0025_seller_group_icon.sql`** (new, applied): adds `group_icon_url text` to `seller_profiles`. Reuses the existing public `train-images` storage bucket/policies from `0003_train_requirements_and_storage.sql` — upload path convention (`{auth.uid()}/{filename}`) already grants sellers write access, so no new bucket was needed.
+- **`components/seller/seller-profile-form.tsx`**: added the existing `ImageUploadField` component (previously only used in the train wizard) for the icon, wired through a hidden input + local state since the rest of the form is an uncontrolled `<form action>`/FormData submission.
+- **`app/dashboard/seller/actions.ts`** (`saveSellerProfile`): accepts and persists `groupIconUrl`.
+- **`app/train/[slug]/page.tsx`**: public schedule table renders the icon (a small circular image) before the seller's `@username` link. `seller_profiles_select_public_on_published_train`'s existing RLS policy is row-level, not column-level, so `group_icon_url` is already covered by the same visibility rule as `whatnot_username`.
+- **`app/dashboard/organizer/trains/[trainId]/schedule/page.tsx`** + **`components/organizer/schedule-manager.tsx`**: organizer's schedule manager shows the same icon on the draggable seller card.
+- Note: `seller_profiles` already had an unused `shop_logo_url` column from the original schema (never wired up in any UI). Left it alone and added a dedicated `group_icon_url` column instead, since a "shop logo" and a "group/community affiliation badge" are conceptually different things a seller might eventually want to set independently.

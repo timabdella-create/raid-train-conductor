@@ -67,16 +67,17 @@ export interface Database {
       seller_profiles: Table<
         {
           id: string; user_id: string; whatnot_username: string; whatnot_profile_url: string;
-          shop_logo_url: string | null; seller_category: string | null; sales_level: string | null;
-          created_at: string; updated_at: string;
+          shop_logo_url: string | null; group_icon_url: string | null; seller_category: string | null;
+          sales_level: string | null; created_at: string; updated_at: string;
         },
         {
           user_id: string; whatnot_username: string; whatnot_profile_url: string;
-          shop_logo_url?: string | null; seller_category?: string | null; sales_level?: string | null;
+          shop_logo_url?: string | null; group_icon_url?: string | null; seller_category?: string | null;
+          sales_level?: string | null;
         },
         Partial<{
           whatnot_username: string; whatnot_profile_url: string; shop_logo_url: string | null;
-          seller_category: string | null; sales_level: string | null;
+          group_icon_url: string | null; seller_category: string | null; sales_level: string | null;
         }>
       >;
       organizer_profiles: Table<

@@ -8,6 +8,7 @@ import type { TrainStatus } from "@/types/database.types";
 import { OrganizerProfileForm } from "@/components/organizer/organizer-profile-form";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { respondToTransfer, respondToCoConductorInvite } from "./actions";
+import { respondToGroupAdminInvite } from "@/lib/groups/actions";
 
 export default async function OrganizerDashboardPage() {
   const supabase = createClient();
@@ -137,8 +138,55 @@ export default async function OrganizerDashboardPage() {
       ? await supabase.from("waitlist_entries").select("id").in("raid_train_id", trainIdsForCounts).eq("status", "waiting")
       : { data: [] as { id: string }[] };
 
+  const { data: incomingGroupAdminInvites } = await supabase
+    .from("seller_group_admins")
+    .select("id, group_id")
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  const groupAdminInviteGroupIds = [...new Set((incomingGroupAdminInvites ?? []).map((i) => i.group_id))];
+  const { data: groupAdminInviteGroups } =
+    groupAdminInviteGroupIds.length > 0
+      ? await supabase.from("seller_groups").select("id, name").in("id", groupAdminInviteGroupIds)
+      : { data: [] as { id: string; name: string }[] };
+  const groupNameByInviteGroupId = new Map((groupAdminInviteGroups ?? []).map((g) => [g.id, g.name]));
+
   return (
     <div className="space-y-6">
+      {(incomingGroupAdminInvites ?? []).length > 0 && (
+        <Card className="border-primary/40 bg-primary/10">
+          <CardHeader>
+            <CardTitle>Incoming group admin invites</CardTitle>
+            <CardDescription>Someone wants you to help admin one of their groups.</CardDescription>
+          </CardHeader>
+          <ul className="space-y-3">
+            {(incomingGroupAdminInvites ?? []).map((invite) => {
+              const acceptAction = respondToGroupAdminInvite.bind(null, invite.id, true);
+              const declineAction = respondToGroupAdminInvite.bind(null, invite.id, false);
+              return (
+                <li key={invite.id} className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm">
+                    <span className="font-medium">{groupNameByInviteGroupId.get(invite.group_id) ?? "A group"}</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <form action={acceptAction}>
+                      <Button type="submit" className="px-3 py-1.5 text-xs">
+                        Accept
+                      </Button>
+                    </form>
+                    <form action={declineAction}>
+                      <Button type="submit" variant="secondary" className="px-3 py-1.5 text-xs">
+                        Decline
+                      </Button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Welcome, {organizerProfile.organizer_name}</h1>

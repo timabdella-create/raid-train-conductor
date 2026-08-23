@@ -47,7 +47,7 @@ export default async function ScheduleManagerPage({ params }: { params: { trainI
       ? supabase.from("profiles").select("user_id, display_name").in("user_id", sellerUserIds)
       : Promise.resolve({ data: [] as { user_id: string; display_name: string }[] }),
     groupIds.length > 0
-      ? supabase.from("seller_groups").select("id, name, icon_url").in("id", groupIds)
+      ? supabase.from("seller_groups").select("id, name, icon_url").in("id", groupIds).neq("status", "rejected")
       : Promise.resolve({ data: [] as { id: string; name: string; icon_url: string }[] }),
   ]);
 

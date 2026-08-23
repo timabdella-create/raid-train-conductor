@@ -41,6 +41,7 @@ export interface WizardData {
   cancellationPolicy: string;
   checkInMinutesBefore: string;
   discordWebhookUrl: string;
+  groupId: string;
 }
 
 export const EMPTY_WIZARD_DATA: WizardData = {
@@ -68,6 +69,7 @@ export const EMPTY_WIZARD_DATA: WizardData = {
   cancellationPolicy: "",
   checkInMinutesBefore: "120",
   discordWebhookUrl: "",
+  groupId: "",
 };
 
 type FormState = { error?: string; fieldErrors?: Record<string, string> };
@@ -78,6 +80,7 @@ interface TrainWizardProps {
   scheduleLocked?: boolean;
   publishLabel?: string;
   showDraftOption?: boolean;
+  groups?: { id: string; name: string }[];
 }
 
 function SubmitButtons({ showDraftOption, publishLabel }: { showDraftOption: boolean; publishLabel: string }) {
@@ -120,6 +123,7 @@ export function TrainWizard({
   scheduleLocked = false,
   publishLabel = "Publish train",
   showDraftOption = true,
+  groups = [],
 }: TrainWizardProps) {
   const isEditing = Boolean(initialData);
   const [step, setStep] = useState(1);
@@ -195,7 +199,7 @@ export function TrainWizard({
         />
         <SignupSettingsStep data={data} update={update} errors={combinedErrors} visible={step === 3} />
         <RequirementsStep data={data} update={update} visible={step === 4} />
-        <RulesStep data={data} update={update} errors={combinedErrors} visible={step === 5} />
+        <RulesStep data={data} update={update} errors={combinedErrors} visible={step === 5} groups={groups} />
         <ReviewStep data={data} visible={step === 6} />
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">

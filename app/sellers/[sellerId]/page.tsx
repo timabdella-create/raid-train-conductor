@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -33,8 +34,22 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
   const trainIds = [...new Set((participants ?? []).map((p) => p.raid_train_id))];
   const { data: trains } =
     trainIds.length > 0
-      ? await supabase.from("raid_trains").select("id, name, slug, event_date, timezone").in("id", trainIds)
-      : { data: [] as { id: string; name: string; slug: string; event_date: string; timezone: string }[] };
+      ? await supabase
+          .from("raid_trains")
+          .select("id, name, slug, event_date, timezone, image_url, image_fit, image_position")
+          .in("id", trainIds)
+      : {
+          data: [] as {
+            id: string;
+            name: string;
+            slug: string;
+            event_date: string;
+            timezone: string;
+            image_url: string | null;
+            image_fit: string;
+            image_position: string;
+          }[],
+        };
   const trainById = new Map((trains ?? []).map((t) => [t.id, t]));
 
   const slotIds = (participants ?? []).map((p) => p.slot_id).filter((id): id is string => Boolean(id));
@@ -45,7 +60,19 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
   const slotById = new Map((slots ?? []).map((s) => [s.id, s]));
 
   const today = new Date().toISOString().slice(0, 10);
-  type UpcomingRow = { train: { id: string; name: string; slug: string; event_date: string; timezone: string }; slotStart: string | null };
+  type UpcomingRow = {
+    train: {
+      id: string;
+      name: string;
+      slug: string;
+      event_date: string;
+      timezone: string;
+      image_url: string | null;
+      image_fit: string;
+      image_position: string;
+    };
+    slotStart: string | null;
+  };
   const upcomingTrains: UpcomingRow[] = [];
   for (const p of participants ?? []) {
     const train = trainById.get(p.raid_train_id);
@@ -103,17 +130,40 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
         <h2 className="mb-3 text-sm font-semibold">Upcoming trains</h2>
         {upcomingTrains.length > 0 ? (
           <ul className="divide-y divide-border">
-            {upcomingTrains.map(({ train, slotStart }) => (
-              <li key={train.id} className="py-2.5 first:pt-0 last:pb-0">
-                <Link href={`/train/${train.slug}`} className="font-medium hover:underline">
-                  {train.name}
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                  {train.event_date}
-                  {slotStart ? ` · ${formatSlotTime(slotStart, train.timezone)}` : ""}
-                </p>
-              </li>
-            ))}
+            {upcomingTrains.map(({ train, slotStart }) => {
+              const positionClass =
+                train.image_position === "top"
+                  ? "object-top"
+                  : train.image_position === "bottom"
+                    ? "object-bottom"
+                    : "object-center";
+              return (
+                <li key={train.id} className="py-3 first:pt-0 last:pb-0">
+                  <Link href={`/train/${train.slug}`} className="font-medium hover:underline">
+                    {train.name}
+                  </Link>
+                  {train.image_url && (
+                    <Link
+                      href={`/train/${train.slug}`}
+                      className="mt-2 block overflow-hidden rounded-md border border-border"
+                    >
+                      <div className="relative h-32 w-full">
+                        <Image
+                          src={train.image_url}
+                          alt=""
+                          fill
+                          className={`object-cover ${positionClass}`}
+                        />
+                      </div>
+                    </Link>
+                  )}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {train.event_date}
+                    {slotStart ? ` · ${formatSlotTime(slotStart, train.timezone)}` : ""}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">No upcoming trains.</p>

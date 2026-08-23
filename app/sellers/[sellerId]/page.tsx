@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { formatSlotTime } from "@/lib/trains/generate-slots";
 
 export default async function SellerProfilePage({ params }: { params: { sellerId: string } }) {
   const supabase = createClient();
@@ -17,13 +18,42 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
 
   if (!seller) notFound();
 
-  const [{ data: counts }, { data: group }] = await Promise.all([
+  const [{ data: counts }, { data: group }, { data: participants }] = await Promise.all([
     supabase.rpc("get_seller_completed_counts", { p_seller_ids: [seller.id] }),
     seller.group_id
       ? supabase.from("seller_groups").select("id, name, icon_url").eq("id", seller.group_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    // train_participants' public RLS only returns rows on publicly-visible
+    // trains, so this list naturally excludes anything unpublished/private
+    // without needing an extra filter here.
+    supabase.from("train_participants").select("raid_train_id, slot_id").eq("seller_id", seller.id),
   ]);
   const completedTrains = counts?.[0]?.completed_trains ?? 0;
+
+  const trainIds = [...new Set((participants ?? []).map((p) => p.raid_train_id))];
+  const { data: trains } =
+    trainIds.length > 0
+      ? await supabase.from("raid_trains").select("id, name, slug, event_date, timezone").in("id", trainIds)
+      : { data: [] as { id: string; name: string; slug: string; event_date: string; timezone: string }[] };
+  const trainById = new Map((trains ?? []).map((t) => [t.id, t]));
+
+  const slotIds = (participants ?? []).map((p) => p.slot_id).filter((id): id is string => Boolean(id));
+  const { data: slots } =
+    slotIds.length > 0
+      ? await supabase.from("train_slots").select("id, start_datetime").in("id", slotIds)
+      : { data: [] as { id: string; start_datetime: string }[] };
+  const slotById = new Map((slots ?? []).map((s) => [s.id, s]));
+
+  const today = new Date().toISOString().slice(0, 10);
+  type UpcomingRow = { train: { id: string; name: string; slug: string; event_date: string; timezone: string }; slotStart: string | null };
+  const upcomingTrains: UpcomingRow[] = [];
+  for (const p of participants ?? []) {
+    const train = trainById.get(p.raid_train_id);
+    if (!train || train.event_date < today) continue;
+    const slotStart = p.slot_id ? (slotById.get(p.slot_id)?.start_datetime ?? null) : null;
+    upcomingTrains.push({ train, slotStart });
+  }
+  upcomingTrains.sort((a, b) => a.train.event_date.localeCompare(b.train.event_date));
 
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
@@ -67,6 +97,27 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
         >
           View Whatnot profile ↗
         </a>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="mb-3 text-sm font-semibold">Upcoming trains</h2>
+        {upcomingTrains.length > 0 ? (
+          <ul className="divide-y divide-border">
+            {upcomingTrains.map(({ train, slotStart }) => (
+              <li key={train.id} className="py-2.5 first:pt-0 last:pb-0">
+                <Link href={`/train/${train.slug}`} className="font-medium hover:underline">
+                  {train.name}
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                  {train.event_date}
+                  {slotStart ? ` · ${formatSlotTime(slotStart, train.timezone)}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">No upcoming trains.</p>
+        )}
       </Card>
     </main>
   );

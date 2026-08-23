@@ -27,7 +27,14 @@ export function parseTrainFormData(formData: FormData) {
     cancellationPolicy: formData.get("cancellationPolicy"),
     checkInMinutesBefore: formData.get("checkInMinutesBefore"),
     discordWebhookUrl: formData.get("discordWebhookUrl"),
-    groupId: formData.get("groupId"),
+    // The group picker in the Rules step only renders when the organizer
+    // actually administers a group, so for everyone else this field is
+    // entirely absent from the form -- formData.get() then returns null,
+    // which zod's .optional() doesn't accept (only undefined). Without
+    // this fallback, every organizer with zero admin-able groups got a
+    // silent-ish "fix the highlighted fields" error with no field to fix,
+    // because the field causing it was the one that wasn't rendered.
+    groupId: formData.get("groupId") || undefined,
     action: formData.get("action"),
   };
 }

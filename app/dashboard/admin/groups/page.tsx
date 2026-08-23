@@ -19,8 +19,8 @@ export default async function AdminGroupsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: me } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle();
-  if (me?.role !== "admin") redirect("/dashboard");
+  const { data: me } = await supabase.from("users").select("is_admin").eq("id", user.id).maybeSingle();
+  if (!me?.is_admin) redirect("/dashboard");
 
   const { data: groups } = await supabase
     .from("seller_groups")

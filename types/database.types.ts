@@ -45,11 +45,11 @@ export interface Database {
     Tables: {
       users: Table<
         {
-          id: string; email: string; role: UserRole; onboarded: boolean;
+          id: string; email: string; role: UserRole; onboarded: boolean; is_admin: boolean;
           created_at: string; updated_at: string;
         },
-        { id: string; email: string; role?: UserRole; onboarded?: boolean },
-        { role?: UserRole }
+        { id: string; email: string; role?: UserRole; onboarded?: boolean; is_admin?: boolean },
+        { role?: UserRole; is_admin?: boolean }
       >;
       profiles: Table<
         {

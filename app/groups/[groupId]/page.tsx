@@ -47,6 +47,20 @@ export default async function GroupRosterPage({ params }: { params: { groupId: s
   const upcomingTrains = (trains ?? []).filter((t) => t.event_date >= today);
   const pastTrains = (trains ?? []).filter((t) => t.event_date < today);
 
+  // Open-slot counts, shown next to each train so visitors can tell at a
+  // glance whether there's still room to join.
+  const trainIds = (trains ?? []).map((t) => t.id);
+  const { data: slotRows } = trainIds.length
+    ? await supabase.from("train_slots").select("raid_train_id, status").in("raid_train_id", trainIds)
+    : { data: [] as { raid_train_id: string; status: string }[] };
+  const slotCountsByTrainId = new Map<string, { total: number; open: number }>();
+  for (const row of slotRows ?? []) {
+    const counts = slotCountsByTrainId.get(row.raid_train_id) ?? { total: 0, open: 0 };
+    counts.total += 1;
+    if (row.status === "open") counts.open += 1;
+    slotCountsByTrainId.set(row.raid_train_id, counts);
+  }
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
@@ -83,14 +97,32 @@ export default async function GroupRosterPage({ params }: { params: { groupId: s
         <Card>
           {upcomingTrains.length > 0 ? (
             <ul className="divide-y divide-border">
-              {upcomingTrains.map((t) => (
-                <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                  <Link href={`/train/${t.slug}`} className="font-medium hover:underline">
-                    {t.name}
-                  </Link>
-                  <span className="text-xs text-muted-foreground">{t.event_date}</span>
-                </li>
-              ))}
+              {upcomingTrains.map((t) => {
+                const counts = slotCountsByTrainId.get(t.id);
+                return (
+                  <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                    <Link href={`/train/${t.slug}`} className="font-medium hover:underline">
+                      {t.name}
+                    </Link>
+                    <div className="flex items-center gap-3">
+                      {counts && counts.total > 0 && (
+                        <span
+                          className={
+                            counts.open > 0
+                              ? "text-xs font-medium text-emerald-400"
+                              : "text-xs text-muted-foreground"
+                          }
+                        >
+                          {counts.open > 0
+                            ? `${counts.open} of ${counts.total} slots open`
+                            : `${counts.total} slots · full`}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">{t.event_date}</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">No upcoming trains tagged to this group yet.</p>
@@ -103,14 +135,22 @@ export default async function GroupRosterPage({ params }: { params: { groupId: s
             </summary>
             <Card className="mt-2">
               <ul className="divide-y divide-border">
-                {pastTrains.map((t) => (
-                  <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                    <Link href={`/train/${t.slug}`} className="font-medium hover:underline">
-                      {t.name}
-                    </Link>
-                    <span className="text-xs text-muted-foreground">{t.event_date}</span>
-                  </li>
-                ))}
+                {pastTrains.map((t) => {
+                  const counts = slotCountsByTrainId.get(t.id);
+                  return (
+                    <li key={t.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                      <Link href={`/train/${t.slug}`} className="font-medium hover:underline">
+                        {t.name}
+                      </Link>
+                      <div className="flex items-center gap-3">
+                        {counts && counts.total > 0 && (
+                          <span className="text-xs text-muted-foreground">{counts.total} slots</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">{t.event_date}</span>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           </details>

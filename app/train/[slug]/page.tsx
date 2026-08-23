@@ -307,17 +307,20 @@ export default async function PublicTrainPage({
                               />
                             </Link>
                           )}
+                          <Link href={`/sellers/${slot.seller_id}`} className="font-medium hover:underline">
+                            @{seller.whatnot_username}
+                          </Link>
+                          <span className="text-xs text-muted-foreground">
+                            ({seller.completedTrains} {seller.completedTrains === 1 ? "train" : "trains"})
+                          </span>
                           <a
                             href={seller.whatnot_profile_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-medium hover:underline"
+                            className="inline-flex items-center rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                           >
-                            @{seller.whatnot_username}
+                            Whatnot profile ↗
                           </a>
-                          <span className="text-xs text-muted-foreground">
-                            ({seller.completedTrains} {seller.completedTrains === 1 ? "train" : "trains"})
-                          </span>
                           <BookmarkButton
                             sellerId={slot.seller_id as string}
                             whatnotUsername={seller.whatnot_username}

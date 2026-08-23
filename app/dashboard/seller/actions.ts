@@ -33,28 +33,35 @@ export async function saveSellerProfile(
   _prevState: SellerProfileFormState,
   formData: FormData
 ): Promise<SellerProfileFormState> {
-  console.log("[saveSellerProfile] DEBUG start");
   const supabase = createClient();
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
-  console.log("[saveSellerProfile] DEBUG getUser", { userId: user?.id, userError: userError?.message });
 
   if (!user) {
     return { error: "You must be logged in." };
   }
 
+  // FormData.get() returns null (not undefined) for any field that isn't
+  // present in the submitted form -- and since the group name/icon inputs
+  // only render when groupMode is "new" (same for existingGroupId when
+  // it's "existing"), those keys are frequently absent entirely. Zod's
+  // .optional() only accepts undefined, not null, so without this
+  // normalization every save with groupMode "none" or "existing" failed
+  // validation on the *other* mode's now-absent fields -- silently, since
+  // the resulting fieldErrors were keyed to inputs that weren't even on
+  // screen to display them.
+  const nullToUndefined = (value: FormDataEntryValue | null) => (value === null ? undefined : value);
+
   const parsed = sellerProfileSchema.safeParse({
     whatnotUsername: formData.get("whatnotUsername"),
     whatnotProfileUrl: formData.get("whatnotProfileUrl"),
-    sellerCategory: formData.get("sellerCategory"),
+    sellerCategory: nullToUndefined(formData.get("sellerCategory")),
     groupMode: formData.get("groupMode") || "none",
-    existingGroupId: formData.get("existingGroupId"),
-    newGroupName: formData.get("newGroupName"),
-    newGroupIconUrl: formData.get("newGroupIconUrl"),
+    existingGroupId: nullToUndefined(formData.get("existingGroupId")),
+    newGroupName: nullToUndefined(formData.get("newGroupName")),
+    newGroupIconUrl: nullToUndefined(formData.get("newGroupIconUrl")),
   });
-  console.log("[saveSellerProfile] DEBUG parsed", { success: parsed.success, issues: parsed.success ? null : parsed.error.issues });
 
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -87,34 +94,22 @@ export async function saveSellerProfile(
       })
       .select("id")
       .single();
-    console.log("[saveSellerProfile] DEBUG group insert", { newGroup, groupError: groupError?.message });
     if (groupError || !newGroup) {
       return { error: groupError?.message ?? "Couldn't create that group." };
     }
     groupId = newGroup.id;
   }
 
-  console.log("[saveSellerProfile] DEBUG about to upsert", {
-    userId: user.id,
-    whatnotUsername: parsed.data.whatnotUsername,
-    groupId,
-  });
-
-  const { error, data, status, statusText } = await supabase
-    .from("seller_profiles")
-    .upsert(
-      {
-        user_id: user.id,
-        whatnot_username: parsed.data.whatnotUsername,
-        whatnot_profile_url: parsed.data.whatnotProfileUrl,
-        seller_category: parsed.data.sellerCategory || null,
-        group_id: groupId,
-      },
-      { onConflict: "user_id" }
-    )
-    .select();
-
-  console.log("[saveSellerProfile] DEBUG upsert result", { error, data, status, statusText });
+  const { error } = await supabase.from("seller_profiles").upsert(
+    {
+      user_id: user.id,
+      whatnot_username: parsed.data.whatnotUsername,
+      whatnot_profile_url: parsed.data.whatnotProfileUrl,
+      seller_category: parsed.data.sellerCategory || null,
+      group_id: groupId,
+    },
+    { onConflict: "user_id" }
+  );
 
   if (error) {
     return { error: error.message };
@@ -122,7 +117,6 @@ export async function saveSellerProfile(
 
   revalidatePath("/dashboard/seller");
   revalidatePath("/dashboard/profile");
-  console.log("[saveSellerProfile] DEBUG done, returning success");
   return {};
 }
 

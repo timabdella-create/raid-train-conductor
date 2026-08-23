@@ -39,12 +39,25 @@ export function ScheduleStep({ data, update, errors, visible, locked }: Props) {
   return (
     <div className={visible ? "space-y-4" : "hidden"}>
       {locked && (
-        <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          The date and time settings are locked because a seller is already
-          confirmed or has an application pending on this train — changing
-          the schedule now would strand them. Resolve or remove those first
-          if you need to reschedule.
-        </p>
+        <>
+          <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+            The date and time settings are locked because a seller is already
+            confirmed or has an application pending on this train — changing
+            the schedule now would strand them. Resolve or remove those first
+            if you need to reschedule.
+          </p>
+          {/* Disabled inputs are excluded from FormData entirely on submit,
+              so once locked, the visible fields below stop being sent at
+              all -- these hidden mirrors keep the current values flowing
+              through on every save, no matter which step the organizer is
+              actually trying to change. */}
+          <input type="hidden" name="eventDate" value={data.eventDate} />
+          <input type="hidden" name="timezone" value={data.timezone} />
+          <input type="hidden" name="startTime" value={data.startTime} />
+          <input type="hidden" name="endTime" value={data.endTime} />
+          <input type="hidden" name="slotDurationMinutes" value={data.slotDurationMinutes} />
+          <input type="hidden" name="breakMinutes" value={data.breakMinutes} />
+        </>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

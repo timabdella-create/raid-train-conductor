@@ -14,7 +14,7 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
   const { data: train } = await supabase
     .from("raid_trains")
     .select(
-      "id, organizer_id, name, description, theme, category, image_url, image_position, image_fit, seller_thumbnail_url, event_date, start_time, end_time, timezone, slot_duration_minutes, break_minutes, signup_mode, visibility, status, rules, cancellation_policy, check_in_minutes_before, requires_whatnot_profile, requires_show_link, sales_level_requirement, additional_questions, discord_webhook_url"
+      "id, organizer_id, name, description, theme, category, image_url, image_position, image_fit, seller_thumbnail_url, event_date, start_time, end_time, timezone, slot_duration_minutes, break_minutes, signup_mode, visibility, status, rules, cancellation_policy, check_in_minutes_before, requires_whatnot_profile, requires_show_link, sales_level_requirement, additional_questions, discord_webhook_url, group_id"
     )
     .eq("id", params.trainId)
     .maybeSingle();
@@ -30,6 +30,31 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
   if (!organizerProfile || organizerProfile.id !== train.organizer_id) {
     redirect("/dashboard/organizer");
   }
+
+  // Groups this organizer can tag a train with: ones they created, plus
+  // ones they've been added as an admin on. If this train is already
+  // tagged with a group the organizer no longer admins (e.g. they were
+  // removed), that group is still included so the field doesn't silently
+  // show "No group" and drop the tag on next save.
+  const [{ data: createdGroups }, { data: adminRows }] = await Promise.all([
+    supabase.from("seller_groups").select("id, name").eq("created_by", user.id).neq("status", "rejected"),
+    supabase.from("seller_group_admins").select("group_id").eq("user_id", user.id).eq("status", "accepted"),
+  ]);
+  const adminGroupIds = [...new Set((adminRows ?? []).map((r) => r.group_id))];
+  const { data: adminGroups } =
+    adminGroupIds.length > 0
+      ? await supabase.from("seller_groups").select("id, name").in("id", adminGroupIds).neq("status", "rejected")
+      : { data: [] as { id: string; name: string }[] };
+  const groupsById = new Map([...(createdGroups ?? []), ...(adminGroups ?? [])].map((g) => [g.id, g]));
+  if (train.group_id && !groupsById.has(train.group_id)) {
+    const { data: currentGroup } = await supabase
+      .from("seller_groups")
+      .select("id, name")
+      .eq("id", train.group_id)
+      .maybeSingle();
+    if (currentGroup) groupsById.set(currentGroup.id, currentGroup);
+  }
+  const groups = [...groupsById.values()];
 
   const initialData: WizardData = {
     name: train.name,
@@ -56,6 +81,7 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
     cancellationPolicy: train.cancellation_policy ?? "",
     checkInMinutesBefore: String(train.check_in_minutes_before),
     discordWebhookUrl: train.discord_webhook_url ?? "",
+    groupId: train.group_id ?? "",
   };
 
   const boundUpdateTrain = updateTrain.bind(null, train.id);
@@ -82,6 +108,7 @@ export default async function EditTrainPage({ params }: { params: { trainId: str
         scheduleLocked={scheduleLocked}
         publishLabel={train.status === "draft" ? "Publish train" : "Save changes"}
         showDraftOption={train.status === "draft"}
+        groups={groups}
       />
     </div>
   );

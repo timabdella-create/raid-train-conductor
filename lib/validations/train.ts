@@ -112,6 +112,7 @@ export const rulesSchema = z.object({
     .regex(DISCORD_WEBHOOK_URL_PATTERN, "Enter a Discord webhook URL, e.g. https://discord.com/api/webhooks/123/abc")
     .optional()
     .or(z.literal("")),
+  groupId: z.string().trim().uuid().optional().or(z.literal("")),
 });
 export type RulesInput = z.infer<typeof rulesSchema>;
 

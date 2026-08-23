@@ -3,6 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { CHECK_IN_PRESETS } from "@/lib/validations/train";
 import type { WizardData } from "../train-wizard";
 
@@ -11,9 +12,10 @@ interface Props {
   update: (patch: Partial<WizardData>) => void;
   visible: boolean;
   errors?: Record<string, string>;
+  groups?: { id: string; name: string }[];
 }
 
-export function RulesStep({ data, update, visible, errors = {} }: Props) {
+export function RulesStep({ data, update, visible, errors = {}, groups = [] }: Props) {
   return (
     <div className={visible ? "space-y-4" : "hidden"}>
       <div>
@@ -78,6 +80,24 @@ export function RulesStep({ data, update, visible, errors = {} }: Props) {
           what&apos;s still open.
         </p>
       </div>
+
+      {groups.length > 0 && (
+        <div>
+          <Label htmlFor="groupId">Group (optional)</Label>
+          <Select id="groupId" name="groupId" value={data.groupId} onChange={(e) => update({ groupId: e.target.value })}>
+            <option value="">No group</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </Select>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tag this train as run by one of your groups. Only shows groups you admin — its members will see
+            this train listed on the group&apos;s page.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

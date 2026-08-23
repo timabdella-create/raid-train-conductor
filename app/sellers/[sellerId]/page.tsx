@@ -21,7 +21,7 @@ export default async function SellerProfilePage({ params }: { params: { sellerId
   const [{ data: counts }, { data: group }, { data: participants }] = await Promise.all([
     supabase.rpc("get_seller_completed_counts", { p_seller_ids: [seller.id] }),
     seller.group_id
-      ? supabase.from("seller_groups").select("id, name, icon_url").eq("id", seller.group_id).maybeSingle()
+      ? supabase.from("seller_groups").select("id, name, icon_url").eq("id", seller.group_id).neq("status", "rejected").maybeSingle()
       : Promise.resolve({ data: null }),
     // train_participants' public RLS only returns rows on publicly-visible
     // trains, so this list naturally excludes anything unpublished/private

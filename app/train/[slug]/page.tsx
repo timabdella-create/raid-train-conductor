@@ -76,7 +76,7 @@ export default async function PublicTrainPage({
     const groupIds = [...new Set((sellerRows ?? []).map((r) => r.group_id).filter((id): id is string => !!id))];
     const { data: groupRows } =
       groupIds.length > 0
-        ? await supabase.from("seller_groups").select("id, name, icon_url").in("id", groupIds)
+        ? await supabase.from("seller_groups").select("id, name, icon_url").in("id", groupIds).neq("status", "rejected")
         : { data: [] as { id: string; name: string; icon_url: string }[] };
     const groupById = new Map((groupRows ?? []).map((g) => [g.id, { id: g.id, name: g.name, iconUrl: g.icon_url }]));
 

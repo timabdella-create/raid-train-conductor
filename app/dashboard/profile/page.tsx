@@ -31,7 +31,7 @@ export default async function EditProfilePage() {
         .select("whatnot_username, whatnot_profile_url, seller_category, group_id")
         .eq("user_id", user.id)
         .maybeSingle(),
-      supabase.from("seller_groups").select("id, name, icon_url").order("name"),
+      supabase.from("seller_groups").select("id, name, icon_url").neq("status", "rejected").order("name"),
     ]);
 
   const groups = (groupRows ?? []).map((g) => ({ id: g.id, name: g.name, iconUrl: g.icon_url }));

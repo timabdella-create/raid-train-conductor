@@ -118,6 +118,7 @@ export async function createTrain(
       cancellation_policy: data.cancellationPolicy || null,
       check_in_minutes_before: data.checkInMinutesBefore,
       discord_webhook_url: data.discordWebhookUrl || null,
+      group_id: data.groupId || null,
       requires_whatnot_profile: data.requiresWhatnotProfile,
       requires_show_link: data.requiresShowLink,
       sales_level_requirement: data.salesLevelRequirement || null,

@@ -25,6 +25,8 @@ export type DeliveryMethod = "email" | "sms" | "push" | "discord";
 export type DeliveryStatus = "queued" | "sent" | "failed";
 export type TransferStatus = "pending" | "accepted" | "declined" | "cancelled";
 export type CoConductorStatus = "pending" | "accepted" | "declined" | "removed";
+export type GroupStatus = "pending" | "approved" | "rejected";
+export type GroupAdminStatus = "pending" | "accepted" | "declined" | "removed";
 
 interface Table<Row, Insert, Update> {
   Row: Row;
@@ -82,14 +84,26 @@ export interface Database {
       >;
       seller_groups: Table<
         {
-          id: string; name: string; icon_url: string; created_by: string;
+          id: string; name: string; icon_url: string; created_by: string; status: GroupStatus;
           created_at: string; updated_at: string;
         },
         {
-          name: string; icon_url: string; created_by: string;
+          name: string; icon_url: string; created_by: string; status?: GroupStatus;
         },
         Partial<{
-          name: string; icon_url: string;
+          name: string; icon_url: string; status: GroupStatus;
+        }>
+      >;
+      seller_group_admins: Table<
+        {
+          id: string; group_id: string; user_id: string; invited_by: string; to_email: string;
+          status: GroupAdminStatus; created_at: string; responded_at: string | null;
+        },
+        {
+          group_id: string; user_id: string; invited_by: string; to_email: string; status?: GroupAdminStatus;
+        },
+        Partial<{
+          status: GroupAdminStatus; responded_at: string | null;
         }>
       >;
       organizer_profiles: Table<
@@ -115,7 +129,7 @@ export interface Database {
           requires_whatnot_profile: boolean; requires_show_link: boolean;
           sales_level_requirement: string | null; additional_questions: string[];
           invite_code: string | null; cloned_from_id: string | null;
-          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null; group_id: string | null;
           published_at: string | null; created_at: string; updated_at: string;
         },
         Partial<{
@@ -126,7 +140,7 @@ export interface Database {
           requires_whatnot_profile: boolean; requires_show_link: boolean;
           sales_level_requirement: string | null; additional_questions: string[];
           invite_code: string | null; cloned_from_id: string | null; published_at: string | null;
-          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null; group_id: string | null;
         }> & {
           organizer_id: string; name: string; slug: string; event_date: string;
           start_time: string; end_time: string; slot_duration_minutes: number;
@@ -140,7 +154,7 @@ export interface Database {
           check_in_minutes_before: number; requires_whatnot_profile: boolean;
           requires_show_link: boolean; sales_level_requirement: string | null;
           additional_questions: string[]; invite_code: string | null; published_at: string | null;
-          seller_thumbnail_url: string | null; discord_webhook_url: string | null;
+          seller_thumbnail_url: string | null; discord_webhook_url: string | null; group_id: string | null;
         }>
       >;
       train_slots: Table<
@@ -368,6 +382,9 @@ export interface Database {
         { p_group_id: string },
         { seller_id: string; whatnot_username: string; whatnot_profile_url: string }[]
       >;
+      invite_group_admin: Fn<{ p_group_id: string; p_to_email: string }, string>;
+      respond_to_group_admin_invite: Fn<{ p_invite_id: string; p_accept: boolean }, undefined>;
+      remove_group_admin: Fn<{ p_id: string }, undefined>;
     };
   };
 }

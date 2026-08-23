@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { TrainActivity } from "@/components/discovery/train-activity";
 import { AnnouncementPopup } from "@/components/discovery/announcement-popup";
@@ -37,6 +38,21 @@ const FEATURES = [
   {
     title: "Waitlists that fill themselves",
     body: "When a seller cancels, the next person in line gets offered the slot automatically, with a countdown to respond.",
+  },
+];
+
+const DISCORD_SERVERS = [
+  {
+    name: "Raid Train Conductor",
+    description: "The main community server — every train, every seller.",
+    href: "https://discord.gg/JgkMgfzGq",
+    image: "/discord/raid-train-conductor-logo.png",
+  },
+  {
+    name: "PenBattles.com",
+    description: "The niche server for Pen Battles trains.",
+    href: "https://discord.gg/Bmj6afhbN",
+    image: "/discord/pen-battles-logo.png",
   },
 ];
 
@@ -162,6 +178,44 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            Join the community
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Hop into Discord for schedules, announcements, and raid train chatter.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {DISCORD_SERVERS.map((server) => (
+            <a
+              key={server.name}
+              href={server.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 rounded-lg border border-border bg-card p-5 transition-shadow hover:shadow-md"
+            >
+              <Image
+                src={server.image}
+                alt={`${server.name} Discord icon`}
+                width={64}
+                height={64}
+                className="h-16 w-16 shrink-0 rounded-full object-cover"
+              />
+              <div className="text-left">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Join our Discord
+                </p>
+                <p className="font-display text-lg font-semibold">{server.name}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{server.description}</p>
+              </div>
+            </a>
+          ))}
         </div>
       </section>
 

@@ -181,6 +181,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Temporarily hidden while the Discord servers are still being finished. Flip back on by changing false to true below. */}
+      {false && (
       <section className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
@@ -218,6 +220,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       <Leaderboard variant="public" />
 

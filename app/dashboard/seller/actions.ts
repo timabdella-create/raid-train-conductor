@@ -33,10 +33,13 @@ export async function saveSellerProfile(
   _prevState: SellerProfileFormState,
   formData: FormData
 ): Promise<SellerProfileFormState> {
+  console.log("[saveSellerProfile] DEBUG start");
   const supabase = createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+  console.log("[saveSellerProfile] DEBUG getUser", { userId: user?.id, userError: userError?.message });
 
   if (!user) {
     return { error: "You must be logged in." };
@@ -51,6 +54,7 @@ export async function saveSellerProfile(
     newGroupName: formData.get("newGroupName"),
     newGroupIconUrl: formData.get("newGroupIconUrl"),
   });
+  console.log("[saveSellerProfile] DEBUG parsed", { success: parsed.success, issues: parsed.success ? null : parsed.error.issues });
 
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -83,22 +87,34 @@ export async function saveSellerProfile(
       })
       .select("id")
       .single();
+    console.log("[saveSellerProfile] DEBUG group insert", { newGroup, groupError: groupError?.message });
     if (groupError || !newGroup) {
       return { error: groupError?.message ?? "Couldn't create that group." };
     }
     groupId = newGroup.id;
   }
 
-  const { error } = await supabase.from("seller_profiles").upsert(
-    {
-      user_id: user.id,
-      whatnot_username: parsed.data.whatnotUsername,
-      whatnot_profile_url: parsed.data.whatnotProfileUrl,
-      seller_category: parsed.data.sellerCategory || null,
-      group_id: groupId,
-    },
-    { onConflict: "user_id" }
-  );
+  console.log("[saveSellerProfile] DEBUG about to upsert", {
+    userId: user.id,
+    whatnotUsername: parsed.data.whatnotUsername,
+    groupId,
+  });
+
+  const { error, data, status, statusText } = await supabase
+    .from("seller_profiles")
+    .upsert(
+      {
+        user_id: user.id,
+        whatnot_username: parsed.data.whatnotUsername,
+        whatnot_profile_url: parsed.data.whatnotProfileUrl,
+        seller_category: parsed.data.sellerCategory || null,
+        group_id: groupId,
+      },
+      { onConflict: "user_id" }
+    )
+    .select();
+
+  console.log("[saveSellerProfile] DEBUG upsert result", { error, data, status, statusText });
 
   if (error) {
     return { error: error.message };
@@ -106,6 +122,7 @@ export async function saveSellerProfile(
 
   revalidatePath("/dashboard/seller");
   revalidatePath("/dashboard/profile");
+  console.log("[saveSellerProfile] DEBUG done, returning success");
   return {};
 }
 

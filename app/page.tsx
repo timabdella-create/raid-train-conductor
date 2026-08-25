@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { Leaderboard } from "@/components/leaderboard/leaderboard";
 import { TrainActivity } from "@/components/discovery/train-activity";
@@ -87,18 +86,19 @@ export default function HomePage() {
             className="mt-10 flex animate-fade-up flex-wrap items-center justify-center gap-4"
             style={{ animationDelay: "240ms" }}
           >
-            <Link
-              href="/register?role=organizer"
-              className="glow-accent rounded-md bg-accent px-6 py-3.5 font-display text-base font-semibold text-accent-foreground transition-transform hover:scale-[1.03]"
+            {/* Signups temporarily disabled -- was <Link href="/register?role=organizer">, swap back when re-enabling. */}
+            <span
+              aria-disabled="true"
+              className="glow-accent pointer-events-none cursor-not-allowed rounded-md bg-accent px-6 py-3.5 font-display text-base font-semibold text-accent-foreground opacity-40"
             >
               Organize a Raid Train
-            </Link>
-            <Link
-              href="/register?role=seller"
-              className="rounded-md border border-white/20 bg-white/5 px-6 py-3.5 font-display text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/10"
+            </span>
+            <span
+              aria-disabled="true"
+              className="pointer-events-none cursor-not-allowed rounded-md border border-white/20 bg-white/5 px-6 py-3.5 font-display text-base font-semibold text-white opacity-40 backdrop-blur"
             >
               Join a Raid Train
-            </Link>
+            </span>
           </div>
         </div>
 
@@ -232,19 +232,20 @@ export default function HomePage() {
           Free to start. No credit card, no spreadsheets, no more &quot;is this slot still open?&quot;
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href="/register?role=organizer"
-            className="rounded-md bg-white px-6 py-3.5 font-display text-base font-semibold transition-transform hover:scale-[1.03]"
+          {/* Signups temporarily disabled -- was <Link href="/register?role=organizer">, swap back when re-enabling. */}
+          <span
+            aria-disabled="true"
+            className="pointer-events-none cursor-not-allowed rounded-md bg-white px-6 py-3.5 font-display text-base font-semibold opacity-40"
             style={{ color: "hsl(var(--hero-ink))" }}
           >
             Organize a Raid Train
-          </Link>
-          <Link
-            href="/register?role=seller"
-            className="rounded-md border border-white/30 px-6 py-3.5 font-display text-base font-semibold text-white transition-colors hover:bg-white/10"
+          </span>
+          <span
+            aria-disabled="true"
+            className="pointer-events-none cursor-not-allowed rounded-md border border-white/30 px-6 py-3.5 font-display text-base font-semibold text-white opacity-40"
           >
             Join a Raid Train
-          </Link>
+          </span>
         </div>
       </section>
 
